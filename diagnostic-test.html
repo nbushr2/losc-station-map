@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnostic Test - Louisiana Map</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    #map { height: 70vh; width: 100%; }
+    #debug {
+      padding: 20px;
+      background: #f5f5f5;
+      border-top: 3px solid #461D7C;
+      height: 30vh;
+      overflow-y: auto;
+    }
+    #debug h2 {
+      margin: 0 0 10px 0;
+      color: #461D7C;
+    }
+    .log-entry {
+      padding: 5px;
+      margin: 3px 0;
+      border-left: 3px solid #ccc;
+      padding-left: 10px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .log-success { border-left-color: #4CAF50; color: #2e7d32; }
+    .log-error { border-left-color: #f44336; color: #c62828; }
+    .log-info { border-left-color: #2196F3; color: #1565c0; }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+  
+  <div id="debug">
+    <h2>🔍 Diagnostic Log</h2>
+    <div id="log"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Logging function
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(message);
+    }
+
+    log('🚀 Starting diagnostic test...', 'info');
+    
+    // Initialize map
+    const map = L.map('map').setView([30.95, -91.9], 7);
+    log('✅ Map initialized', 'success');
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO'
+    }).addTo(map);
+    log('✅ Base map tiles loaded', 'success');
+
+    // Test each file individually
+    const filesToTest = [
+      {
+        name: 'State Boundary',
+        path: './data/louisiana_state_boundary.geojson',
+        style: { color: '#461D7C', weight: 3, fillOpacity: 0, dashArray: '10,5' }
+      },
+      {
+        name: 'Climate Divisions',
+        path: './data/louisiana_climate_divisions.geojson',
+        style: { fillColor: '#FF6347', fillOpacity: 0.3, color: '#333', weight: 2 }
+      },
+      {
+        name: 'Parishes (new)',
+        path: './data/louisiana_parishes_new.geojson',
+        style: { fillColor: 'transparent', color: '#666', weight: 1.5 }
+      },
+      {
+        name: 'Parishes (old)',
+        path: './data/louisiana_parishes.geojson',
+        style: { fillColor: 'transparent', color: '#999', weight: 1 }
+      }
+    ];
+
+    async function testFile(file) {
+      log(`📂 Testing: ${file.name}`, 'info');
+      log(`   Path: ${file.path}`, 'info');
+      
+      try {
+        const response = await fetch(file.path);
+        log(`   HTTP Status: ${response.status} ${response.statusText}`, 
+            response.ok ? 'success' : 'error');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        log(`   Content-Type: ${contentType}`, 'info');
+        
+        const text = await response.text();
+        log(`   File size: ${(text.length / 1024).toFixed(2)} KB`, 'info');
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+          log(`   ✅ Valid JSON`, 'success');
+        } catch (e) {
+          throw new Error(`Invalid JSON: ${e.message}`);
+        }
+        
+        if (data.type === 'FeatureCollection') {
+          log(`   ✅ Valid GeoJSON FeatureCollection`, 'success');
+          log(`   Features: ${data.features ? data.features.length : 0}`, 'info');
+        } else {
+          log(`   ⚠️ Not a FeatureCollection (type: ${data.type})`, 'error');
+        }
+        
+        // Try to add to map
+        const layer = L.geoJSON(data, {
+          style: file.style,
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              const props = Object.keys(feature.properties).slice(0, 3).join(', ');
+              layer.bindTooltip(`${file.name}<br/>Props: ${props}`);
+            }
+          }
+        });
+        
+        layer.addTo(map);
+        log(`   ✅ Successfully added to map!`, 'success');
+        log(``, 'info'); // blank line
+        
+        return { success: true, layer };
+        
+      } catch (error) {
+        log(`   ❌ ERROR: ${error.message}`, 'error');
+        log(``, 'info');
+        return { success: false, error: error.message };
+      }
+    }
+
+    // Test all files
+    async function runDiagnostics() {
+      log('═══════════════════════════════════════', 'info');
+      log('Starting file tests...', 'info');
+      log('═══════════════════════════════════════', 'info');
+      log('', 'info');
+      
+      const results = {};
+      
+      for (const file of filesToTest) {
+        const result = await testFile(file);
+        results[file.name] = result;
+        await new Promise(resolve => setTimeout(resolve, 500)); // Pause between tests
+      }
+      
+      log('═══════════════════════════════════════', 'info');
+      log('SUMMARY:', 'info');
+      log('═══════════════════════════════════════', 'info');
+      
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const [name, result] of Object.entries(results)) {
+        if (result.success) {
+          log(`✅ ${name}: LOADED`, 'success');
+          successCount++;
+        } else {
+          log(`❌ ${name}: FAILED - ${result.error}`, 'error');
+          failCount++;
+        }
+      }
+      
+      log('', 'info');
+      log(`Total: ${successCount} succeeded, ${failCount} failed`, 
+          failCount === 0 ? 'success' : 'error');
+      
+      if (failCount === 0) {
+        log('', 'info');
+        log('🎉 ALL FILES LOADED SUCCESSFULLY!', 'success');
+        log('If you can see boundaries on the map above, everything works!', 'success');
+      } else {
+        log('', 'info');
+        log('⚠️ Some files failed to load. See errors above.', 'error');
+      }
+    }
+
+    // Run tests after a short delay
+    setTimeout(runDiagnostics, 1000);
+  </script>
+
+</body>
+</html>
