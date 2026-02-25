@@ -1,494 +1,677 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Louisiana Map Dashboard</title>
-
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Louisiana Weather Stations | LOSC</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  
   <style>
-    :root{
-      --purple:#3b1b6b;
-      --purple2:#5c2aa6;
-      --card:#ffffff;
-      --bg:#f6f6fb;
-      --text:#1c1c1c;
-      --muted:#6b6b6b;
-      --danger-bg:#fde7ea;
-      --danger:#b42318;
-      --border:#e6e6ef;
+    :root {
+      --lsu-purple: #461D7C;
+      --lsu-gold: #FDD023;
+      --lsu-dark: #2C0F4F;
     }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background:var(--bg);
-      color:var(--text);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      border: 3px solid var(--lsu-gold);
+      max-width: 420px;
     }
-    .wrap{
-      display:grid;
-      grid-template-columns: 380px 1fr;
-      height:100vh;
+    .controls h3 {
+      color: var(--lsu-purple);
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
     }
-    .panel{
-      overflow:auto;
-      padding:18px 16px;
-      border-right:1px solid var(--border);
-      background:linear-gradient(180deg, #ffffff, #fbfbff);
-    }
-    .map{
-      position:relative;
-      height:100%;
-    }
-    #map{
-      height:100%;
-      width:100%;
-    }
-    h1{
-      margin:0 0 12px;
-      font-size:34px;
-      color:var(--purple);
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:14px;
-      margin:12px 0;
-      box-shadow: 0 1px 0 rgba(0,0,0,0.03);
-    }
-    .sectionTitle{
-      font-size:22px;
-      margin:0 0 10px;
-      color:var(--purple);
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    label{
-      display:block;
-      font-size:14px;
-      color:var(--muted);
-      margin:10px 0 6px;
-    }
-    .row{
-      display:grid;
+    .date-inputs {
+      display: grid;
       grid-template-columns: 1fr 1fr;
-      gap:10px;
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
     }
-    input[type="date"], select{
-      width:100%;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      outline:none;
-      font-size:15px;
-      background:#fff;
+    .date-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 0.3rem;
     }
-    input[type="date"]:focus, select:focus{
-      border-color:#c3b2ff;
-      box-shadow:0 0 0 3px rgba(123,92,255,.14);
+    .date-group input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
     }
-    .btn{
-      width:100%;
-      border:none;
-      border-radius:14px;
-      padding:14px 14px;
-      font-size:18px;
-      font-weight:650;
-      background: linear-gradient(90deg, var(--purple), var(--purple2));
-      color:#fff;
-      cursor:pointer;
-      margin-top:12px;
+    .date-group input:focus {
+      outline: none;
+      border-color: var(--lsu-purple);
     }
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
+    .quick-select select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      margin-bottom: 0.8rem;
     }
-    .checks{
-      display:grid;
-      gap:10px;
-      margin-top:8px;
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+      border: none;
+      padding: 0.9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all 0.3s;
     }
-    .checkItem{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-size:16px;
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(70,29,124,0.4);
     }
-    .checkItem input{
-      width:18px;
-      height:18px;
-      accent-color: var(--purple);
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
     }
-    .hr{
-      height:1px;
-      background:var(--border);
-      margin:14px 0;
+    
+    .layer-toggles {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 2px solid #e0e0e0;
     }
-    .alert{
-      display:none;
-      background:var(--danger-bg);
-      color:var(--danger);
-      border:1px solid #f4b4bd;
-      padding:10px 12px;
-      border-radius:12px;
-      margin-top:12px;
-      font-weight:600;
+    .layer-toggles h4 {
+      font-size: 0.9rem;
+      color: var(--lsu-purple);
+      margin-bottom: 0.5rem;
     }
-    pre#log{
-      margin:10px 0 0;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#0b1020;
-      color:#d7def7;
-      font-size:12px;
-      line-height:1.35;
-      white-space:pre-wrap;
-      word-break:break-word;
-      max-height:240px;
-      overflow:auto;
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      margin: 0.4rem 0;
     }
-    .hint{
-      font-size:13px;
-      color:var(--muted);
-      margin-top:8px;
+    .toggle-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    #status {
+      margin-top: 0.8rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-align: center;
+      display: none;
+      font-weight: 600;
+    }
+    #status.loading {
+      background: #e3f2fd;
+      color: #1976d2;
+      display: block;
+    }
+    #status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+    #status.error {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #e0e0e0;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    #map { height: 100vh; width: 100%; }
+    
+    #info-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      width: 340px;
+      max-height: calc(100vh - 20px);
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      border: 3px solid var(--lsu-gold);
+    }
+    .panel-header {
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+      padding: 1rem 1.2rem;
+      font-weight: 700;
+      border-radius: 9px 9px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-btn {
+      background: var(--lsu-gold);
+      color: var(--lsu-dark);
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .panel-content { padding: 1.2rem; }
+    #info-panel.collapsed { width: auto; }
+    #info-panel.collapsed .panel-content { display: none; }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.7rem;
+      margin-bottom: 1rem;
+    }
+    .stat-box {
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--lsu-gold);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      opacity: 0.95;
+      margin-top: 0.3rem;
+    }
+    
+    .station-info {
+      background: linear-gradient(135deg, #f8f9fa, #e8f0fe);
+      padding: 1.2rem;
+      border-radius: 8px;
+      border-left: 5px solid var(--lsu-gold);
+      display: none;
+    }
+    .station-info h4 { color: var(--lsu-purple); margin-bottom: 0.8rem; }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #ddd;
+      font-size: 0.9rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #666; font-weight: 600; }
+    .info-value { color: var(--lsu-purple); font-weight: 700; }
+    
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 10px;
+      z-index: 900;
+      background: rgba(255, 255, 255, 0.98);
+      padding: 1.2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      border: 2px solid var(--lsu-gold);
+    }
+    .legend-title {
+      font-weight: 700;
+      color: var(--lsu-purple);
+      margin-bottom: 0.8rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 0.4rem 0;
+      font-size: 0.85rem;
+    }
+    .legend-color {
+      width: 24px;
+      height: 16px;
+      border-radius: 3px;
+      margin-right: 0.6rem;
+      border: 1px solid #666;
+    }
+    .legend-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 0.6rem;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
+    .popup-title {
+      font-weight: 700;
+      color: var(--lsu-purple);
+      margin-bottom: 0.6rem;
+      font-size: 1.1rem;
+      border-bottom: 2px solid var(--lsu-gold);
+      padding-bottom: 0.4rem;
+    }
+    .popup-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      font-size: 0.9rem;
+    }
+    .popup-label { color: #666; font-weight: 600; }
+    .popup-val { font-weight: 700; color: var(--lsu-purple); }
+    
+    @media (max-width: 768px) {
+      .controls, #info-panel { max-width: calc(100vw - 20px); }
+      .date-inputs { grid-template-columns: 1fr; }
     }
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <aside class="panel">
-      <h1>🗓️ Select Date Range</h1>
 
-      <div class="card">
-        <div class="row">
-          <div>
-            <label for="startDate">Start Date</label>
-            <input id="startDate" type="date" />
-          </div>
-          <div>
-            <label for="endDate">End Date</label>
-            <input id="endDate" type="date" />
-          </div>
-        </div>
-
-        <label for="quickSelect">Quick Select</label>
-        <select id="quickSelect">
-          <option value="">Quick Select…</option>
-          <option value="today">Today</option>
-          <option value="yesterday">Yesterday</option>
-          <option value="last7">Last 7 days</option>
-          <option value="last14">Last 14 days</option>
-          <option value="thisMonth">This month</option>
-        </select>
-
-        <button class="btn" id="btnFetch">📊 Fetch Data</button>
-
-        <div class="alert" id="uiError">⚠️</div>
-        <div class="hint">
-          Note: this template doesn’t assume any API endpoint. It just validates dates and logs what it would request.
-        </div>
+  <div class="controls">
+    <h3>📅 Select Date Range</h3>
+    
+    <div class="date-inputs">
+      <div class="date-group">
+        <label>Start Date</label>
+        <input type="date" id="start-date">
       </div>
-
-      <div class="hr"></div>
-
-      <div class="card">
-        <h2 class="sectionTitle">🗺️ Map Layers</h2>
-        <div class="checks">
-          <label class="checkItem"><input id="chkState" type="checkbox" checked /> State Boundary</label>
-          <label class="checkItem"><input id="chkClimate" type="checkbox" checked /> Climate Divisions</label>
-          <label class="checkItem"><input id="chkParish" type="checkbox" checked /> Parish Boundaries</label>
-          <label class="checkItem"><input id="chkStations" type="checkbox" checked /> Weather Stations</label>
-        </div>
+      <div class="date-group">
+        <label>End Date</label>
+        <input type="date" id="end-date">
       </div>
-
-      <div class="card">
-        <h2 class="sectionTitle">🔍 Diagnostic Log</h2>
-        <pre id="log"></pre>
-      </div>
-    </aside>
-
-    <main class="map">
-      <div id="map"></div>
-    </main>
+    </div>
+    
+    <select id="quick-select" class="quick-select">
+      <option value="">Quick Select...</option>
+      <option value="7">Last 7 Days</option>
+      <option value="14">Last 14 Days</option>
+      <option value="30">Last 30 Days</option>
+    </select>
+    
+    <button class="btn" id="fetch-btn">📊 Fetch Data</button>
+    
+    <div class="layer-toggles">
+      <h4>🗺️ Map Layers</h4>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-state" checked>
+        <span>State Boundary</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-divisions" checked>
+        <span>Climate Divisions</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-parishes" checked>
+        <span>Parish Boundaries</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-stations" checked>
+        <span>Weather Stations</span>
+      </label>
+    </div>
+    
+    <div id="status"></div>
   </div>
 
-<script>
-/* =========================================================
-   Utilities (prevents your "div.slice is not a function" crash)
-   ========================================================= */
-function safeSlice(v, start, end) {
-  return String(v ?? "").slice(start, end);
-}
-function $(id){ return document.getElementById(id); }
+  <div id="map"></div>
 
-function logLine(msg){
-  const t = new Date();
-  const stamp = t.toLocaleTimeString();
-  $("log").textContent += `[${stamp}] ${msg}\n`;
-  $("log").scrollTop = $("log").scrollHeight;
-}
-function showError(msg){
-  const el = $("uiError");
-  el.style.display = "block";
-  el.textContent = `⚠️ ${msg}`;
-  logLine(`❌ ${msg}`);
-}
-function clearError(){
-  $("uiError").style.display = "none";
-  $("uiError").textContent = "";
-}
+  <div id="info-panel">
+    <div class="panel-header">
+      <span>📊 Station Data</span>
+      <button class="toggle-btn" id="toggle-btn">−</button>
+    </div>
+    <div class="panel-content">
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-number" id="total-stations">—</div>
+          <div class="stat-label">Stations</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="date-range">—</div>
+          <div class="stat-label">Days</div>
+        </div>
+      </div>
+      
+      <div id="station-card" class="station-info">
+        <h4 id="station-name"></h4>
+        <div id="station-details"></div>
+      </div>
+      
+      <div style="margin-top: 1rem; padding: 0.8rem; background: #fff3cd; border-radius: 6px; font-size: 0.85rem;">
+        💡 Click station markers for weather data
+      </div>
+    </div>
+  </div>
 
-/* =========================================================
-   Default dates (match your screenshot example range)
-   ========================================================= */
-(function initDates(){
-  // Default: 2026-02-18 to 2026-02-24 (change as you like)
-  $("startDate").value = "2026-02-18";
-  $("endDate").value   = "2026-02-24";
-})();
+  <div class="legend">
+    <div class="legend-title">Legend</div>
+    <div class="legend-item">
+      <div class="legend-circle" style="background: var(--lsu-purple);"></div>
+      <span>Weather Station</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: rgba(255,99,71,0.3);"></div>
+      <span>Climate Division</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: transparent; border: 2px solid #666;"></div>
+      <span>Parish</span>
+    </div>
+  </div>
 
-/* =========================================================
-   Map init
-   ========================================================= */
-const map = L.map("map", { zoomControl: true }).setView([30.9843, -91.9623], 7);
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+  <script>
+    // Map setup
+    const map = L.map('map').setView([30.95, -91.9], 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO'
+    }).addTo(map);
 
-logLine("✅ Map initialized");
-logLine("✅ Base map tiles loaded");
+    const layers = {
+      state: null,
+      divisions: null,
+      parishes: null,
+      stations: L.markerClusterGroup({ maxClusterRadius: 50 })
+    };
 
-/* =========================================================
-   Panes (so boundaries always draw above tiles)
-   ========================================================= */
-map.createPane("boundariesPane");
-map.getPane("boundariesPane").style.zIndex = 450;
+    // Climate division colors
+    const divColors = {
+      '1601': 'rgba(255,99,71,0.3)', '1602': 'rgba(54,162,235,0.3)',
+      '1603': 'rgba(255,206,86,0.3)', '1604': 'rgba(75,192,192,0.3)',
+      '1605': 'rgba(153,102,255,0.3)', '1606': 'rgba(255,159,64,0.3)',
+      '1607': 'rgba(199,199,199,0.3)', '1608': 'rgba(83,102,255,0.3)',
+      '1609': 'rgba(255,99,255,0.3)'
+    };
 
-map.createPane("stationsPane");
-map.getPane("stationsPane").style.zIndex = 500;
+    // Set dates
+    const today = new Date();
+    today.setDate(today.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 6);
+    document.getElementById('end-date').valueAsDate = today;
+    document.getElementById('start-date').valueAsDate = weekAgo;
 
-/* =========================================================
-   Layer storage
-   ========================================================= */
-const layers = {
-  state: null,
-  climate: null,
-  parishes: null,
-  stations: null,
-};
+    // Load boundaries - SYNCHRONOUSLY to ensure they load
+    (async function() {
+      try {
+        // State boundary
+        const stateRes = await fetch('./data/louisiana_state_boundary.geojson');
+        const stateData = await stateRes.json();
+        layers.state = L.geoJSON(stateData, {
+          style: { color: '#461D7C', weight: 3, fillOpacity: 0, dashArray: '10,5' }
+        });
+        layers.state.addTo(map);
+        console.log('✅ State boundary loaded');
 
-/* =========================================================
-   GeoJSON loader with strict validation
-   ========================================================= */
-async function fetchGeoJSON(url){
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Failed to load ${url} (HTTP ${resp.status})`);
-  const data = await resp.json();
-  if (data?.type !== "FeatureCollection") {
-    throw new Error(`Invalid GeoJSON (not FeatureCollection): ${url}`);
-  }
-  return data;
-}
+        // Climate divisions
+        const divRes = await fetch('./data/louisiana_climate_divisions.geojson');
+        const divData = await divRes.json();
+        layers.divisions = L.geoJSON(divData, {
+          style: f => ({
+            fillColor: divColors[f.properties.CLIMDIV] || 'rgba(150,150,150,0.3)',
+            fillOpacity: 1,
+            color: '#333',
+            weight: 2,
+            dashArray: '5,5'
+          }),
+          onEachFeature: (f, layer) => {
+            const name = f.properties.NAME || 'Unknown';
+            const div = f.properties.CLIMDIV || '';
+            layer.bindTooltip(`<b>${name}</b><br/>LA${div.slice(-2)}`, { sticky: true });
+          }
+        });
+        layers.divisions.addTo(map);
+        console.log('✅ Divisions loaded');
 
-/* =========================================================
-   Boundary layers (FIX: use ONLY the new parishes file)
-   ========================================================= */
-async function initBoundaryLayers(){
-  logLine("═══════════════════════════════════════");
-  logLine("Starting layer loads...");
-  logLine("═══════════════════════════════════════");
+        // Parishes
+        const parRes = await fetch('./data/louisiana_parishes_new.geojson');
+        const parData = await parRes.json();
+        layers.parishes = L.geoJSON(parData, {
+          style: { fillColor: 'transparent', color: '#666', weight: 1.5, opacity: 0.6 },
+          onEachFeature: (f, layer) => {
+            layer.bindTooltip(f.properties.NAME || 'Parish', { sticky: true });
+          }
+        });
+        layers.parishes.addTo(map);
+        console.log('✅ Parishes loaded');
 
-  // State
-  try{
-    const gj = await fetchGeoJSON("./data/louisiana_state_boundary.geojson");
-    layers.state = L.geoJSON(gj, {
-      pane: "boundariesPane",
-      style: { color:"#461D7C", weight:3, opacity:1, fillOpacity:0, dashArray:"10,5" }
-    });
-    logLine("✅ State boundary loaded");
-  }catch(e){ showError(e.message); }
+      } catch (error) {
+        console.error('Boundary loading error:', error);
+        showStatus(`⚠️ ${error.message}`, 'error');
+      }
+    })();
 
-  // Climate divisions
-  try{
-    const gj = await fetchGeoJSON("./data/louisiana_climate_divisions.geojson");
-    layers.climate = L.geoJSON(gj, {
-      pane: "boundariesPane",
-      style: { color:"#2b2b2b", weight:2, opacity:1, fillOpacity:0.15 }
-    });
-    logLine("✅ Climate divisions loaded");
-  }catch(e){ showError(e.message); }
+    // Event handlers
+    document.getElementById('quick-select').onchange = function() {
+      if (!this.value) return;
+      const days = parseInt(this.value);
+      const end = new Date();
+      end.setDate(end.getDate() - 1);
+      const start = new Date(end);
+      start.setDate(end.getDate() - (days - 1));
+      document.getElementById('end-date').valueAsDate = end;
+      document.getElementById('start-date').valueAsDate = start;
+    };
 
-  // Parishes (NEW ONLY)
-  try{
-    const gj = await fetchGeoJSON("./data/louisiana_parishes_new.geojson");
-    layers.parishes = L.geoJSON(gj, {
-      pane: "boundariesPane",
-      style: { color:"#666", weight:1.5, opacity:1, fillOpacity:0 }
-    });
-    logLine("✅ Parish boundaries (new) loaded");
-  }catch(e){ showError(e.message); }
+    document.getElementById('fetch-btn').onclick = fetchData;
+    document.getElementById('toggle-btn').onclick = function() {
+      const panel = document.getElementById('info-panel');
+      panel.classList.toggle('collapsed');
+      this.textContent = panel.classList.contains('collapsed') ? '+' : '−';
+    };
 
-  // Add initially checked ones
-  if ($("chkState").checked && layers.state) layers.state.addTo(map);
-  if ($("chkClimate").checked && layers.climate) layers.climate.addTo(map);
-  if ($("chkParish").checked && layers.parishes) layers.parishes.addTo(map);
+    // Layer toggles
+    document.getElementById('toggle-state').onchange = function() {
+      if (layers.state) {
+        this.checked ? map.addLayer(layers.state) : map.removeLayer(layers.state);
+      }
+    };
+    document.getElementById('toggle-divisions').onchange = function() {
+      if (layers.divisions) {
+        this.checked ? map.addLayer(layers.divisions) : map.removeLayer(layers.divisions);
+      }
+    };
+    document.getElementById('toggle-parishes').onchange = function() {
+      if (layers.parishes) {
+        this.checked ? map.addLayer(layers.parishes) : map.removeLayer(layers.parishes);
+      }
+    };
+    document.getElementById('toggle-stations').onchange = function() {
+      this.checked ? map.addLayer(layers.stations) : map.removeLayer(layers.stations);
+    };
 
-  logLine("✅ Boundary layers added (based on checkboxes)");
-}
+    // Fetch data
+    async function fetchData() {
+      const startDate = document.getElementById('start-date').value.replace(/-/g, '');
+      const endDate = document.getElementById('end-date').value.replace(/-/g, '');
+      
+      if (!startDate || !endDate) {
+        showStatus('⚠️ Select both dates', 'error');
+        return;
+      }
 
-/* =========================================================
-   Example stations layer (optional)
-   - Replace URL with your stations GeoJSON when you have it.
-   ========================================================= */
-async function initStationsLayer(){
-  // If you don't have a stations file, this keeps UI stable without crashing.
-  // Replace with your real file path when ready:
-  const stationsUrl = "./data/louisiana_weather_stations.geojson";
+      showStatus('<span class="spinner"></span>Loading...', 'loading');
+      document.getElementById('fetch-btn').disabled = true;
 
-  try{
-    const gj = await fetchGeoJSON(stationsUrl);
-    layers.stations = L.geoJSON(gj, {
-      pane: "stationsPane",
-      pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius:5, weight:1, fillOpacity:0.7 })
-    });
-    logLine("✅ Weather stations loaded");
+      try {
+        const stationRes = await fetch('./data/AgStats_co-op_list_Jay_KBedits1.txt');
+        const stationText = await stationRes.text();
+        const stations = parseStations(stationText);
+        
+        showStatus('<span class="spinner"></span>Fetching from ACIS...', 'loading');
+        const acisData = await fetchACIS(stations, startDate, endDate);
+        
+        showStatus('<span class="spinner"></span>Processing...', 'loading');
+        const processed = processData(acisData, stations);
+        
+        if (processed.length === 0) throw new Error('No data returned');
+        
+        displayStations(processed);
+        
+        const days = Math.ceil((
+          new Date(endDate.slice(0,4), endDate.slice(4,6)-1, endDate.slice(6,8)) - 
+          new Date(startDate.slice(0,4), startDate.slice(4,6)-1, startDate.slice(6,8))
+        ) / 86400000) + 1;
+        
+        document.getElementById('total-stations').textContent = processed.length;
+        document.getElementById('date-range').textContent = days;
+        
+        showStatus(`✅ Loaded ${processed.length} stations`, 'success');
+        
+        if (document.getElementById('toggle-stations').checked) {
+          map.addLayer(layers.stations);
+        }
+        
+      } catch (error) {
+        showStatus(`❌ ${error.message}`, 'error');
+      } finally {
+        document.getElementById('fetch-btn').disabled = false;
+      }
+    }
 
-    if ($("chkStations").checked) layers.stations.addTo(map);
-  }catch(e){
-    logLine(`ℹ️ Weather stations not loaded (${safeSlice(e.message, 0, 160)}). If you don't have the file yet, ignore this.`);
-  }
-}
+    function parseStations(text) {
+      const stations = {};
+      text.split('\n').forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        const parts = line.split(/\s+/);
+        if (parts.length < 2) return;
+        const rawId = parts[0];
+        const name = parts.slice(1).join(' ');
+        const stationId = rawId.slice(0, -2);
+        const division = 'LA' + rawId.slice(-2);
+        stations[stationId] = { name, division };
+      });
+      return stations;
+    }
 
-/* =========================================================
-   Checkbox toggles
-   ========================================================= */
-function toggleLayer(chkId, key){
-  const chk = $(chkId);
-  const lyr = layers[key];
-  if (!chk) return;
+    async function fetchACIS(stations, start, end) {
+      const sids = Object.keys(stations).join(',');
+      const res = await fetch('https://data.rcc-acis.org/MultiStnData', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sids, sdate: start, edate: end,
+          meta: ['name', 'climdiv', 'sids', 'll'],
+          elems: [
+            { name: 'maxt', interval: 'dly', smry: 'mean', smry_only: 1 },
+            { name: 'mint', interval: 'dly', smry: 'mean', smry_only: 1 },
+            { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1 },
+            { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1, normal: 'departure' },
+            { name: 'maxt', interval: 'dly', smry: 'max', smry_only: 1 },
+            { name: 'mint', interval: 'dly', smry: 'min', smry_only: 1 },
+            { name: 'hdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+            { name: 'cdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+            { name: 'pcpn', interval: 'dly', smry: 'sum', smry_only: 1 },
+            { name: 'pcpn', interval: 'dly', smry: 'max', smry_only: 1 },
+            { name: 'pcpn', interval: 'dly', smry: 'cnt_ge_0.01', duration: 'dly', smry_only: 1 }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error(`ACIS error: ${res.status}`);
+      return await res.json();
+    }
 
-  if (!lyr){
-    // Not loaded (yet) — avoid crashes
-    logLine(`⚠️ Layer not ready: ${key}`);
-    return;
-  }
+    function processData(api, stations) {
+      const data = [];
+      (api.data || []).forEach(stn => {
+        const meta = stn.meta || {};
+        const sids = meta.sids || [];
+        const id = sids[0] ? sids[0].trim() : null;
+        const ll = meta.ll || [null, null];
+        const info = id && stations[id] ? stations[id] : {};
+        const s = stn.smry || [];
+        const lat = parseFloat(ll[1]);
+        const lon = parseFloat(ll[0]);
+        if (!isNaN(lat) && !isNaN(lon) && lat >= 28.5 && lat <= 33.1 && lon >= -94.2 && lon <= -88.7) {
+          data.push({
+            name: meta.name || info.name || 'Unknown',
+            division: info.division || meta.climdiv || 'Unknown',
+            lat, lon,
+            tmax: fmt(s[0]), tmin: fmt(s[1]), tavg: fmt(s[2]), tavgDfn: fmt(s[3]),
+            maxT: fmt(s[4]), minT: fmt(s[5]), hdd: fmt(s[6]), cdd: fmt(s[7]),
+            precip: fmt(s[8]), precipMax: fmt(s[9]), precipDays: fmt(s[10])
+          });
+        }
+      });
+      return data;
+    }
 
-  if (chk.checked) lyr.addTo(map);
-  else map.removeLayer(lyr);
-}
+    function fmt(v) {
+      if (v === undefined || v === null || v === 'M' || v === '') return '—';
+      if (v === 'T') return '0.0';
+      const n = parseFloat(v);
+      return isNaN(n) ? '—' : n.toFixed(1);
+    }
 
-$("chkState").addEventListener("change",  () => toggleLayer("chkState", "state"));
-$("chkClimate").addEventListener("change",() => toggleLayer("chkClimate", "climate"));
-$("chkParish").addEventListener("change", () => toggleLayer("chkParish", "parishes"));
-$("chkStations").addEventListener("change",() => toggleLayer("chkStations", "stations"));
+    function displayStations(data) {
+      layers.stations.clearLayers();
+      data.forEach(s => {
+        const m = L.circleMarker([s.lat, s.lon], {
+          radius: 7, fillColor: '#461D7C', color: 'white', weight: 2, fillOpacity: 0.85
+        });
+        m.bindPopup(`
+          <div class="popup-title">${s.name}</div>
+          <div class="popup-row"><span class="popup-label">Division:</span><span class="popup-val">${s.division}</span></div>
+          <div class="popup-row"><span class="popup-label">Avg High:</span><span class="popup-val">${s.tmax}°F</span></div>
+          <div class="popup-row"><span class="popup-label">Avg Low:</span><span class="popup-val">${s.tmin}°F</span></div>
+          <div class="popup-row"><span class="popup-label">Total Precip:</span><span class="popup-val">${s.precip}"</span></div>
+          <div class="popup-row"><span class="popup-label">HDD / CDD:</span><span class="popup-val">${s.hdd} / ${s.cdd}</span></div>
+        `);
+        m.bindTooltip(s.name, { direction: 'top', offset: [0, -6] });
+        m.on('click', () => {
+          document.getElementById('station-name').textContent = s.name;
+          document.getElementById('station-details').innerHTML = `
+            <div class="info-row"><span class="info-label">Division:</span><span class="info-value">${s.division}</span></div>
+            <div class="info-row"><span class="info-label">Avg High:</span><span class="info-value">${s.tmax}°F</span></div>
+            <div class="info-row"><span class="info-label">Avg Low:</span><span class="info-value">${s.tmin}°F</span></div>
+            <div class="info-row"><span class="info-label">Avg Temp:</span><span class="info-value">${s.tavg}°F</span></div>
+            <div class="info-row"><span class="info-label">Departure:</span><span class="info-value">${s.tavgDfn}°F</span></div>
+            <div class="info-row"><span class="info-label">Total Precip:</span><span class="info-value">${s.precip}"</span></div>
+            <div class="info-row"><span class="info-label">Max Precip:</span><span class="info-value">${s.precipMax}"</span></div>
+            <div class="info-row"><span class="info-label">Rain Days:</span><span class="info-value">${s.precipDays}</span></div>
+            <div class="info-row"><span class="info-label">HDD:</span><span class="info-value">${s.hdd}</span></div>
+            <div class="info-row"><span class="info-label">CDD:</span><span class="info-value">${s.cdd}</span></div>
+          `;
+          document.getElementById('station-card').style.display = 'block';
+        });
+        layers.stations.addLayer(m);
+      });
+    }
 
-/* =========================================================
-   Quick select (FIX: never call .slice on an element)
-   ========================================================= */
-function setDateRangeISO(startISO, endISO){
-  $("startDate").value = startISO;
-  $("endDate").value = endISO;
-}
-
-$("quickSelect").addEventListener("change", () => {
-  clearError();
-
-  const choice = $("quickSelect").value; // ✅ value, not the element
-  const now = new Date();
-
-  const toISO = (d) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${day}`;
-  };
-
-  let start, end;
-
-  if (choice === "today"){
-    start = new Date(now);
-    end = new Date(now);
-  } else if (choice === "yesterday"){
-    start = new Date(now); start.setDate(start.getDate()-1);
-    end = new Date(start);
-  } else if (choice === "last7"){
-    end = new Date(now);
-    start = new Date(now); start.setDate(start.getDate()-6);
-  } else if (choice === "last14"){
-    end = new Date(now);
-    start = new Date(now); start.setDate(start.getDate()-13);
-  } else if (choice === "thisMonth"){
-    end = new Date(now);
-    start = new Date(now.getFullYear(), now.getMonth(), 1);
-  } else {
-    return;
-  }
-
-  setDateRangeISO(toISO(start), toISO(end));
-  logLine(`🗓️ Quick select applied: ${choice}`);
-});
-
-/* =========================================================
-   Fetch Data button (you can wire your real API here)
-   ========================================================= */
-$("btnFetch").addEventListener("click", async () => {
-  clearError();
-
-  const startISO = $("startDate").value;
-  const endISO   = $("endDate").value;
-
-  if (!startISO || !endISO){
-    showError("Please select both start and end dates.");
-    return;
-  }
-  if (startISO > endISO){
-    showError("Start date cannot be after end date.");
-    return;
-  }
-
-  // Example request payload (replace with your real endpoint)
-  logLine("📦 Preparing data request...");
-  logLine(`Start: ${startISO} | End: ${endISO}`);
-
-  // If you had an API endpoint, you'd do something like:
-  // const resp = await fetch(`/api/data?start=${startISO}&end=${endISO}`);
-  // const data = await resp.json();
-  // ... then draw on map
-
-  logLine("✅ (Template) Data fetch simulated. Wire your API call here.");
-});
-
-/* =========================================================
-   Boot
-   ========================================================= */
-(async function boot(){
-  try{
-    await initBoundaryLayers();
-    await initStationsLayer();
-  }catch(e){
-    showError(e.message);
-  }
-})();
-</script>
+    function showStatus(msg, type) {
+      const s = document.getElementById('status');
+      s.innerHTML = msg;
+      s.className = type;
+    }
+  </script>
 </body>
 </html>
