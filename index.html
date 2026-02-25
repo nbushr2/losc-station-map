@@ -18,7 +18,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     
-    /* Controls Panel */
     .controls {
       position: absolute;
       top: 10px;
@@ -35,9 +34,6 @@
       color: var(--lsu-purple);
       margin-bottom: 0.8rem;
       font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
     .date-inputs {
       display: grid;
@@ -63,16 +59,13 @@
       outline: none;
       border-color: var(--lsu-purple);
     }
-    .quick-select {
-      margin-bottom: 0.8rem;
-    }
     .quick-select select {
       width: 100%;
       padding: 0.6rem;
       border: 2px solid #ddd;
       border-radius: 6px;
       font-size: 0.9rem;
-      cursor: pointer;
+      margin-bottom: 0.8rem;
     }
     .btn {
       width: 100%;
@@ -96,7 +89,6 @@
       transform: none;
     }
     
-    /* Layer Toggles */
     .layer-toggles {
       margin-top: 1rem;
       padding-top: 1rem;
@@ -107,16 +99,12 @@
       color: var(--lsu-purple);
       margin-bottom: 0.5rem;
     }
-    .toggle-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
     .toggle-item {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       font-size: 0.85rem;
+      margin: 0.4rem 0;
     }
     .toggle-item input[type="checkbox"] {
       width: 18px;
@@ -124,7 +112,6 @@
       cursor: pointer;
     }
     
-    /* Status Messages */
     #status {
       margin-top: 0.8rem;
       padding: 0.8rem;
@@ -138,7 +125,6 @@
       background: #e3f2fd;
       color: #1976d2;
       display: block;
-      animation: pulse 2s infinite;
     }
     #status.success {
       background: #e8f5e9;
@@ -151,11 +137,6 @@
       display: block;
     }
     
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-    
     .spinner {
       display: inline-block;
       width: 14px;
@@ -166,18 +147,10 @@
       animation: spin 1s linear infinite;
       margin-right: 0.5rem;
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    #map { height: 100vh; width: 100%; }
     
-    /* Map */
-    #map {
-      height: 100vh;
-      width: 100%;
-    }
-    
-    /* Info Panel */
     #info-panel {
       position: absolute;
       top: 10px;
@@ -187,7 +160,6 @@
       max-height: calc(100vh - 20px);
       overflow-y: auto;
       background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(10px);
       border-radius: 12px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.25);
       border: 3px solid var(--lsu-gold);
@@ -197,7 +169,6 @@
       color: white;
       padding: 1rem 1.2rem;
       font-weight: 700;
-      font-size: 1rem;
       border-radius: 9px 9px 0 0;
       display: flex;
       justify-content: space-between;
@@ -211,20 +182,10 @@
       border-radius: 4px;
       cursor: pointer;
       font-weight: 700;
-      transition: all 0.2s;
     }
-    .toggle-btn:hover {
-      transform: scale(1.1);
-    }
-    .panel-content {
-      padding: 1.2rem;
-    }
-    #info-panel.collapsed {
-      width: auto;
-    }
-    #info-panel.collapsed .panel-content {
-      display: none;
-    }
+    .panel-content { padding: 1.2rem; }
+    #info-panel.collapsed { width: auto; }
+    #info-panel.collapsed .panel-content { display: none; }
     
     .stats {
       display: grid;
@@ -238,16 +199,11 @@
       padding: 1rem;
       border-radius: 8px;
       text-align: center;
-      transition: transform 0.2s;
-    }
-    .stat-box:hover {
-      transform: translateY(-2px);
     }
     .stat-number {
       font-size: 2rem;
       font-weight: 700;
       color: var(--lsu-gold);
-      font-family: Georgia, serif;
     }
     .stat-label {
       font-size: 0.8rem;
@@ -262,31 +218,18 @@
       border-left: 5px solid var(--lsu-gold);
       display: none;
     }
-    .station-info h4 {
-      color: var(--lsu-purple);
-      margin-bottom: 0.8rem;
-      font-size: 1.1rem;
-    }
-    .station-info .info-row {
+    .station-info h4 { color: var(--lsu-purple); margin-bottom: 0.8rem; }
+    .info-row {
       display: flex;
       justify-content: space-between;
       padding: 0.4rem 0;
       border-bottom: 1px solid #ddd;
       font-size: 0.9rem;
     }
-    .station-info .info-row:last-child {
-      border-bottom: none;
-    }
-    .info-label {
-      color: #666;
-      font-weight: 600;
-    }
-    .info-value {
-      color: var(--lsu-purple);
-      font-weight: 700;
-    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #666; font-weight: 600; }
+    .info-value { color: var(--lsu-purple); font-weight: 700; }
     
-    /* Legend */
     .legend {
       position: absolute;
       bottom: 20px;
@@ -297,22 +240,11 @@
       border-radius: 10px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       border: 2px solid var(--lsu-gold);
-      max-width: 250px;
     }
     .legend-title {
       font-weight: 700;
       color: var(--lsu-purple);
       margin-bottom: 0.8rem;
-      font-size: 1rem;
-    }
-    .legend-section {
-      margin: 0.8rem 0;
-    }
-    .legend-section-title {
-      font-weight: 600;
-      color: #555;
-      font-size: 0.85rem;
-      margin-bottom: 0.4rem;
     }
     .legend-item {
       display: flex;
@@ -336,10 +268,6 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
-    /* Popup */
-    .station-popup {
-      min-width: 260px;
-    }
     .popup-title {
       font-weight: 700;
       color: var(--lsu-purple);
@@ -354,45 +282,17 @@
       padding: 0.35rem 0;
       font-size: 0.9rem;
     }
-    .popup-label {
-      color: #666;
-      font-weight: 600;
-    }
-    .popup-val {
-      font-weight: 700;
-      color: var(--lsu-purple);
-    }
+    .popup-label { color: #666; font-weight: 600; }
+    .popup-val { font-weight: 700; color: var(--lsu-purple); }
     
-    /* Climate Division Colors */
-    .div-LA01 { background-color: rgba(255, 99, 71, 0.3); }
-    .div-LA02 { background-color: rgba(54, 162, 235, 0.3); }
-    .div-LA03 { background-color: rgba(255, 206, 86, 0.3); }
-    .div-LA04 { background-color: rgba(75, 192, 192, 0.3); }
-    .div-LA05 { background-color: rgba(153, 102, 255, 0.3); }
-    .div-LA06 { background-color: rgba(255, 159, 64, 0.3); }
-    .div-LA07 { background-color: rgba(199, 199, 199, 0.3); }
-    .div-LA08 { background-color: rgba(83, 102, 255, 0.3); }
-    .div-LA09 { background-color: rgba(255, 99, 255, 0.3); }
-    
-    /* Responsive */
     @media (max-width: 768px) {
-      .controls,
-      #info-panel {
-        max-width: calc(100vw - 20px);
-      }
-      .date-inputs {
-        grid-template-columns: 1fr;
-      }
-      .legend {
-        font-size: 0.8rem;
-        padding: 0.8rem;
-      }
+      .controls, #info-panel { max-width: calc(100vw - 20px); }
+      .date-inputs { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Controls -->
   <div class="controls">
     <h3>📅 Select Date Range</h3>
     
@@ -407,43 +307,40 @@
       </div>
     </div>
     
-    <div class="quick-select">
-      <select id="quick-select">
-        <option value="">Quick Select...</option>
-        <option value="7">Last 7 Days</option>
-        <option value="14">Last 14 Days</option>
-        <option value="30">Last 30 Days</option>
-        <option value="90">Last 90 Days</option>
-      </select>
-    </div>
+    <select id="quick-select" class="quick-select">
+      <option value="">Quick Select...</option>
+      <option value="7">Last 7 Days</option>
+      <option value="14">Last 14 Days</option>
+      <option value="30">Last 30 Days</option>
+    </select>
     
     <button class="btn" id="fetch-btn">📊 Fetch Data</button>
     
     <div class="layer-toggles">
       <h4>🗺️ Map Layers</h4>
-      <div class="toggle-group">
-        <label class="toggle-item">
-          <input type="checkbox" id="toggle-divisions" checked>
-          <span>Climate Divisions</span>
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" id="toggle-parishes" checked>
-          <span>Parish Boundaries</span>
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" id="toggle-stations" checked>
-          <span>Weather Stations</span>
-        </label>
-      </div>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-state" checked>
+        <span>State Boundary</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-divisions" checked>
+        <span>Climate Divisions</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-parishes" checked>
+        <span>Parish Boundaries</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-stations" checked>
+        <span>Weather Stations</span>
+      </label>
     </div>
     
     <div id="status"></div>
   </div>
 
-  <!-- Map -->
   <div id="map"></div>
 
-  <!-- Info Panel -->
   <div id="info-panel">
     <div class="panel-header">
       <span>📊 Station Data</span>
@@ -466,42 +363,25 @@
         <div id="station-details"></div>
       </div>
       
-      <div style="margin-top: 1rem; padding: 0.8rem; background: #fff3cd; border-radius: 6px; font-size: 0.85rem; border-left: 4px solid var(--lsu-gold);">
-        💡 <strong>Tip:</strong> Click any station marker for detailed weather data
+      <div style="margin-top: 1rem; padding: 0.8rem; background: #fff3cd; border-radius: 6px; font-size: 0.85rem;">
+        💡 Click station markers for weather data
       </div>
     </div>
   </div>
 
-  <!-- Legend -->
   <div class="legend">
-    <div class="legend-title">Map Legend</div>
-    
-    <div class="legend-section">
-      <div class="legend-section-title">Stations</div>
-      <div class="legend-item">
-        <div class="legend-circle" style="background: var(--lsu-purple);"></div>
-        <span>Weather Station</span>
-      </div>
+    <div class="legend-title">Legend</div>
+    <div class="legend-item">
+      <div class="legend-circle" style="background: var(--lsu-purple);"></div>
+      <span>Weather Station</span>
     </div>
-    
-    <div class="legend-section">
-      <div class="legend-section-title">Climate Divisions</div>
-      <div class="legend-item">
-        <div class="legend-color div-LA01"></div>
-        <span>Northwest (LA01)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color div-LA02"></div>
-        <span>North Central (LA02)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color div-LA03"></div>
-        <span>Northeast (LA03)</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color div-LA09"></div>
-        <span>And 6 more...</span>
-      </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: rgba(255,99,71,0.3);"></div>
+      <span>Climate Division</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: transparent; border: 2px solid #666;"></div>
+      <span>Parish</span>
     </div>
   </div>
 
@@ -509,450 +389,289 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // ═══════════════════════════════════════════════════════════════
-    //  INITIALIZATION
-    // ═══════════════════════════════════════════════════════════════
-    
+    // Map setup
     const map = L.map('map').setView([30.95, -91.9], 7);
-    
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap © CARTO',
-      maxZoom: 18
+      attribution: '© OpenStreetMap © CARTO'
     }).addTo(map);
 
-    // Layer groups
-    const clustersLayer = L.markerClusterGroup({
-      chunkedLoading: true,
-      showCoverageOnHover: false,
-      maxClusterRadius: 50,
-      spiderfyOnMaxZoom: true
-    });
-    
-    let divisionsLayer = null;
-    let parishesLayer = null;
-
-    // Climate division colors
-    const divisionColors = {
-      '1601': '#FF6347',  // Northwest - Tomato
-      '1602': '#36A2EB',  // North Central - Blue
-      '1603': '#FFCE56',  // Northeast - Yellow
-      '1604': '#4BC0C0',  // West Central - Teal
-      '1605': '#9966FF',  // Central - Purple
-      '1606': '#FF9F40',  // East Central - Orange
-      '1607': '#C7C7C7',  // Southwest - Gray
-      '1608': '#5366FF',  // South Central - Blue-Purple
-      '1609': '#FF63FF'   // Southeast - Pink
+    const layers = {
+      state: null,
+      divisions: null,
+      parishes: null,
+      stations: L.markerClusterGroup({ maxClusterRadius: 50 })
     };
 
-    // Set default dates
+    // Climate division colors
+    const divColors = {
+      '1601': 'rgba(255,99,71,0.3)', '1602': 'rgba(54,162,235,0.3)',
+      '1603': 'rgba(255,206,86,0.3)', '1604': 'rgba(75,192,192,0.3)',
+      '1605': 'rgba(153,102,255,0.3)', '1606': 'rgba(255,159,64,0.3)',
+      '1607': 'rgba(199,199,199,0.3)', '1608': 'rgba(83,102,255,0.3)',
+      '1609': 'rgba(255,99,255,0.3)'
+    };
+
+    // Set dates
     const today = new Date();
     today.setDate(today.getDate() - 1);
     const weekAgo = new Date(today);
     weekAgo.setDate(today.getDate() - 6);
-    
     document.getElementById('end-date').valueAsDate = today;
     document.getElementById('start-date').valueAsDate = weekAgo;
 
-    // ═══════════════════════════════════════════════════════════════
-    //  LOAD BOUNDARIES
-    // ═══════════════════════════════════════════════════════════════
-    
-    async function loadBoundaries() {
+    // Load boundaries - SYNCHRONOUSLY to ensure they load
+    (async function() {
       try {
-        // Load Climate Divisions
-        const divResp = await fetch('./data/louisiana_climate_divisions.geojson');
-        const divData = await divResp.json();
-        
-        divisionsLayer = L.geoJSON(divData, {
-          style: feature => {
-            const climdiv = feature.properties.CLIMDIV || '';
-            return {
-              fillColor: divisionColors[climdiv] || '#999',
-              fillOpacity: 0.3,
-              color: '#333',
-              weight: 2,
-              dashArray: '5, 5'
-            };
-          },
-          onEachFeature: (feature, layer) => {
-            const name = feature.properties.NAME || 'Unknown';
-            const climdiv = feature.properties.CLIMDIV || '';
-            layer.bindTooltip(`<strong>${name}</strong><br/>Division: LA${climdiv.slice(-2)}`, {
-              sticky: true,
-              className: 'division-tooltip'
-            });
+        // State boundary
+        const stateRes = await fetch('./data/louisiana_state_boundary.geojson');
+        const stateData = await stateRes.json();
+        layers.state = L.geoJSON(stateData, {
+          style: { color: '#461D7C', weight: 3, fillOpacity: 0, dashArray: '10,5' }
+        });
+        layers.state.addTo(map);
+        console.log('✅ State boundary loaded');
+
+        // Climate divisions
+        const divRes = await fetch('./data/louisiana_climate_divisions.geojson');
+        const divData = await divRes.json();
+        layers.divisions = L.geoJSON(divData, {
+          style: f => ({
+            fillColor: divColors[f.properties.CLIMDIV] || 'rgba(150,150,150,0.3)',
+            fillOpacity: 1,
+            color: '#333',
+            weight: 2,
+            dashArray: '5,5'
+          }),
+          onEachFeature: (f, layer) => {
+            const name = f.properties.NAME || 'Unknown';
+            const div = f.properties.CLIMDIV || '';
+            layer.bindTooltip(`<b>${name}</b><br/>LA${div.slice(-2)}`, { sticky: true });
           }
-        }).addTo(map);
-        
-        console.log('✅ Climate divisions loaded');
-        
-        // Load Parishes
-        const parResp = await fetch('./data/louisiana_parishes_new.geojson');
-        const parData = await parResp.json();
-        
-        parishesLayer = L.geoJSON(parData, {
-          style: {
-            fillColor: 'transparent',
-            color: '#666',
-            weight: 1.5,
-            opacity: 0.6
-          },
-          onEachFeature: (feature, layer) => {
-            const name = feature.properties.NAME || feature.properties.NAMELSAD || 'Parish';
-            layer.bindTooltip(name, { sticky: true });
+        });
+        layers.divisions.addTo(map);
+        console.log('✅ Divisions loaded');
+
+        // Parishes
+        const parRes = await fetch('./data/louisiana_parishes_new.geojson');
+        const parData = await parRes.json();
+        layers.parishes = L.geoJSON(parData, {
+          style: { fillColor: 'transparent', color: '#666', weight: 1.5, opacity: 0.6 },
+          onEachFeature: (f, layer) => {
+            layer.bindTooltip(f.properties.NAME || 'Parish', { sticky: true });
           }
-        }).addTo(map);
-        
+        });
+        layers.parishes.addTo(map);
         console.log('✅ Parishes loaded');
-        
+
       } catch (error) {
-        console.warn('⚠️ Boundary layers not loaded:', error.message);
-        showStatus('Note: Some map layers unavailable', 'error');
+        console.error('Boundary loading error:', error);
+        showStatus(`⚠️ ${error.message}`, 'error');
       }
-    }
+    })();
 
-    loadBoundaries();
-
-    // ═══════════════════════════════════════════════════════════════
-    //  EVENT HANDLERS
-    // ═══════════════════════════════════════════════════════════════
-    
-    document.getElementById('quick-select').addEventListener('change', function() {
+    // Event handlers
+    document.getElementById('quick-select').onchange = function() {
       if (!this.value) return;
       const days = parseInt(this.value);
       const end = new Date();
       end.setDate(end.getDate() - 1);
       const start = new Date(end);
       start.setDate(end.getDate() - (days - 1));
-      
       document.getElementById('end-date').valueAsDate = end;
       document.getElementById('start-date').valueAsDate = start;
-    });
+    };
 
-    document.getElementById('fetch-btn').addEventListener('click', fetchData);
-    
-    document.getElementById('toggle-btn').addEventListener('click', function() {
+    document.getElementById('fetch-btn').onclick = fetchData;
+    document.getElementById('toggle-btn').onclick = function() {
       const panel = document.getElementById('info-panel');
       panel.classList.toggle('collapsed');
       this.textContent = panel.classList.contains('collapsed') ? '+' : '−';
-    });
+    };
 
     // Layer toggles
-    document.getElementById('toggle-divisions').addEventListener('change', function() {
-      if (divisionsLayer) {
-        if (this.checked) map.addLayer(divisionsLayer);
-        else map.removeLayer(divisionsLayer);
+    document.getElementById('toggle-state').onchange = function() {
+      if (layers.state) {
+        this.checked ? map.addLayer(layers.state) : map.removeLayer(layers.state);
       }
-    });
-
-    document.getElementById('toggle-parishes').addEventListener('change', function() {
-      if (parishesLayer) {
-        if (this.checked) map.addLayer(parishesLayer);
-        else map.removeLayer(parishesLayer);
+    };
+    document.getElementById('toggle-divisions').onchange = function() {
+      if (layers.divisions) {
+        this.checked ? map.addLayer(layers.divisions) : map.removeLayer(layers.divisions);
       }
-    });
+    };
+    document.getElementById('toggle-parishes').onchange = function() {
+      if (layers.parishes) {
+        this.checked ? map.addLayer(layers.parishes) : map.removeLayer(layers.parishes);
+      }
+    };
+    document.getElementById('toggle-stations').onchange = function() {
+      this.checked ? map.addLayer(layers.stations) : map.removeLayer(layers.stations);
+    };
 
-    document.getElementById('toggle-stations').addEventListener('change', function() {
-      if (this.checked) map.addLayer(clustersLayer);
-      else map.removeLayer(clustersLayer);
-    });
-
-    // ═══════════════════════════════════════════════════════════════
-    //  FETCH DATA
-    // ═══════════════════════════════════════════════════════════════
-    
+    // Fetch data
     async function fetchData() {
       const startDate = document.getElementById('start-date').value.replace(/-/g, '');
       const endDate = document.getElementById('end-date').value.replace(/-/g, '');
       
       if (!startDate || !endDate) {
-        showStatus('⚠️ Please select both dates', 'error');
+        showStatus('⚠️ Select both dates', 'error');
         return;
       }
 
-      showStatus('<span class="spinner"></span>Loading station list...', 'loading');
+      showStatus('<span class="spinner"></span>Loading...', 'loading');
       document.getElementById('fetch-btn').disabled = true;
 
       try {
-        // Load station list
-        const stationResp = await fetch('./data/AgStats_co-op_list_Jay_KBedits1.txt');
-        if (!stationResp.ok) throw new Error('Station list not found');
+        const stationRes = await fetch('./data/AgStats_co-op_list_Jay_KBedits1.txt');
+        const stationText = await stationRes.text();
+        const stations = parseStations(stationText);
         
-        const stationText = await stationResp.text();
-        const stations = parseStationList(stationText);
+        showStatus('<span class="spinner"></span>Fetching from ACIS...', 'loading');
+        const acisData = await fetchACIS(stations, startDate, endDate);
         
-        showStatus('<span class="spinner"></span>Fetching from ACIS API...', 'loading');
+        showStatus('<span class="spinner"></span>Processing...', 'loading');
+        const processed = processData(acisData, stations);
         
-        // Fetch from ACIS
-        const acisData = await fetchFromACIS(stations, startDate, endDate);
+        if (processed.length === 0) throw new Error('No data returned');
         
-        showStatus('<span class="spinner"></span>Processing data...', 'loading');
+        displayStations(processed);
         
-        // Process and display
-        const processedData = processACISData(acisData, stations);
-        
-        if (processedData.length === 0) {
-          throw new Error('No station data returned');
-        }
-        
-        displayStations(processedData);
-        
-        // Update stats
         const days = Math.ceil((
           new Date(endDate.slice(0,4), endDate.slice(4,6)-1, endDate.slice(6,8)) - 
           new Date(startDate.slice(0,4), startDate.slice(4,6)-1, startDate.slice(6,8))
-        ) / (1000*60*60*24)) + 1;
+        ) / 86400000) + 1;
         
-        document.getElementById('total-stations').textContent = processedData.length;
+        document.getElementById('total-stations').textContent = processed.length;
         document.getElementById('date-range').textContent = days;
         
-        showStatus(`✅ Loaded ${processedData.length} stations`, 'success');
+        showStatus(`✅ Loaded ${processed.length} stations`, 'success');
         
-        // Add stations to map
         if (document.getElementById('toggle-stations').checked) {
-          map.addLayer(clustersLayer);
+          map.addLayer(layers.stations);
         }
         
       } catch (error) {
-        showStatus(`❌ Error: ${error.message}`, 'error');
-        console.error('Full error:', error);
+        showStatus(`❌ ${error.message}`, 'error');
       } finally {
         document.getElementById('fetch-btn').disabled = false;
       }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  PARSE STATION LIST
-    // ═══════════════════════════════════════════════════════════════
-    
-    function parseStationList(text) {
+    function parseStations(text) {
       const stations = {};
       text.split('\n').forEach(line => {
         line = line.trim();
         if (!line) return;
-        
         const parts = line.split(/\s+/);
         if (parts.length < 2) return;
-        
         const rawId = parts[0];
         const name = parts.slice(1).join(' ');
         const stationId = rawId.slice(0, -2);
         const division = 'LA' + rawId.slice(-2);
-        
         stations[stationId] = { name, division };
       });
       return stations;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  FETCH FROM ACIS API
-    // ═══════════════════════════════════════════════════════════════
-    
-    async function fetchFromACIS(stations, startDate, endDate) {
-      const stationIds = Object.keys(stations).join(',');
-      
-      const payload = {
-        sids: stationIds,
-        sdate: startDate,
-        edate: endDate,
-        meta: ['name', 'climdiv', 'sids', 'll'],
-        elems: [
-          { name: 'maxt', interval: 'dly', smry: 'mean', smry_only: 1 },
-          { name: 'mint', interval: 'dly', smry: 'mean', smry_only: 1 },
-          { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1 },
-          { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1, normal: 'departure' },
-          { name: 'maxt', interval: 'dly', smry: 'max', smry_only: 1 },
-          { name: 'mint', interval: 'dly', smry: 'min', smry_only: 1 },
-          { name: 'hdd', interval: 'dly', smry: 'sum', smry_only: 1 },
-          { name: 'cdd', interval: 'dly', smry: 'sum', smry_only: 1 },
-          { name: 'pcpn', interval: 'dly', smry: 'sum', smry_only: 1 },
-          { name: 'pcpn', interval: 'dly', smry: 'max', smry_only: 1 },
-          { name: 'pcpn', interval: 'dly', smry: 'cnt_ge_0.01', duration: 'dly', smry_only: 1 }
-        ]
-      };
-
-      const response = await fetch('https://data.rcc-acis.org/MultiStnData', {
+    async function fetchACIS(stations, start, end) {
+      const sids = Object.keys(stations).join(',');
+      const res = await fetch('https://data.rcc-acis.org/MultiStnData', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          sids, sdate: start, edate: end,
+          meta: ['name', 'climdiv', 'sids', 'll'],
+          elems: [
+            { name: 'maxt', interval: 'dly', smry: 'mean', smry_only: 1 },
+            { name: 'mint', interval: 'dly', smry: 'mean', smry_only: 1 },
+            { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1 },
+            { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1, normal: 'departure' },
+            { name: 'maxt', interval: 'dly', smry: 'max', smry_only: 1 },
+            { name: 'mint', interval: 'dly', smry: 'min', smry_only: 1 },
+            { name: 'hdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+            { name: 'cdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+            { name: 'pcpn', interval: 'dly', smry: 'sum', smry_only: 1 },
+            { name: 'pcpn', interval: 'dly', smry: 'max', smry_only: 1 },
+            { name: 'pcpn', interval: 'dly', smry: 'cnt_ge_0.01', duration: 'dly', smry_only: 1 }
+          ]
+        })
       });
-
-      if (!response.ok) {
-        throw new Error(`ACIS API error: ${response.status}`);
-      }
-
-      return await response.json();
+      if (!res.ok) throw new Error(`ACIS error: ${res.status}`);
+      return await res.json();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  PROCESS DATA
-    // ═══════════════════════════════════════════════════════════════
-    
-    function processACISData(apiData, stations) {
+    function processData(api, stations) {
       const data = [];
-      const stationData = apiData.data || [];
-
-      stationData.forEach(station => {
-        const meta = station.meta || {};
+      (api.data || []).forEach(stn => {
+        const meta = stn.meta || {};
         const sids = meta.sids || [];
-        const lookupId = sids[0] ? sids[0].trim() : null;
+        const id = sids[0] ? sids[0].trim() : null;
         const ll = meta.ll || [null, null];
-        
-        const stationInfo = lookupId && stations[lookupId] ? stations[lookupId] : {};
-        const name = meta.name || stationInfo.name || 'Unknown';
-        const division = stationInfo.division || meta.climdiv || 'Unknown';
-        
-        const smry = station.smry || [];
-        
-        // Validate coordinates
+        const info = id && stations[id] ? stations[id] : {};
+        const s = stn.smry || [];
         const lat = parseFloat(ll[1]);
         const lon = parseFloat(ll[0]);
-        
         if (!isNaN(lat) && !isNaN(lon) && lat >= 28.5 && lat <= 33.1 && lon >= -94.2 && lon <= -88.7) {
           data.push({
-            name,
-            division,
-            lat,
-            lon,
-            tmax: formatVal(smry[0]),
-            tmin: formatVal(smry[1]),
-            tavg: formatVal(smry[2]),
-            tavgDfn: formatVal(smry[3]),
-            maxT: formatVal(smry[4]),
-            minT: formatVal(smry[5]),
-            hdd: formatVal(smry[6]),
-            cdd: formatVal(smry[7]),
-            precip: formatVal(smry[8]),
-            precipMax: formatVal(smry[9]),
-            precipDays: formatVal(smry[10])
+            name: meta.name || info.name || 'Unknown',
+            division: info.division || meta.climdiv || 'Unknown',
+            lat, lon,
+            tmax: fmt(s[0]), tmin: fmt(s[1]), tavg: fmt(s[2]), tavgDfn: fmt(s[3]),
+            maxT: fmt(s[4]), minT: fmt(s[5]), hdd: fmt(s[6]), cdd: fmt(s[7]),
+            precip: fmt(s[8]), precipMax: fmt(s[9]), precipDays: fmt(s[10])
           });
         }
       });
-
       return data;
     }
 
-    function formatVal(val) {
-      if (val === undefined || val === null || val === 'M' || val === '') return '—';
-      if (val === 'T') return '0.0';
-      const num = parseFloat(val);
-      return isNaN(num) ? '—' : num.toFixed(1);
+    function fmt(v) {
+      if (v === undefined || v === null || v === 'M' || v === '') return '—';
+      if (v === 'T') return '0.0';
+      const n = parseFloat(v);
+      return isNaN(n) ? '—' : n.toFixed(1);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  DISPLAY STATIONS
-    // ═══════════════════════════════════════════════════════════════
-    
     function displayStations(data) {
-      clustersLayer.clearLayers();
-
-      data.forEach(station => {
-        const marker = L.circleMarker([station.lat, station.lon], {
-          radius: 7,
-          fillColor: '#461D7C',
-          color: 'white',
-          weight: 2,
-          fillOpacity: 0.85
+      layers.stations.clearLayers();
+      data.forEach(s => {
+        const m = L.circleMarker([s.lat, s.lon], {
+          radius: 7, fillColor: '#461D7C', color: 'white', weight: 2, fillOpacity: 0.85
         });
-
-        const popupContent = `
-          <div class="station-popup">
-            <div class="popup-title">${station.name}</div>
-            <div class="popup-row">
-              <span class="popup-label">Division:</span>
-              <span class="popup-val">${station.division}</span>
-            </div>
-            <div class="popup-row">
-              <span class="popup-label">Avg High:</span>
-              <span class="popup-val">${station.tmax}°F</span>
-            </div>
-            <div class="popup-row">
-              <span class="popup-label">Avg Low:</span>
-              <span class="popup-val">${station.tmin}°F</span>
-            </div>
-            <div class="popup-row">
-              <span class="popup-label">Avg Temp:</span>
-              <span class="popup-val">${station.tavg}°F</span>
-            </div>
-            <div class="popup-row">
-              <span class="popup-label">Total Precip:</span>
-              <span class="popup-val">${station.precip}"</span>
-            </div>
-            <div class="popup-row">
-              <span class="popup-label">Max Precip:</span>
-              <span class="popup-val">${station.precipMax}"</span>
-            </div>
-            <div class="popup-row">
-              <span class="popup-label">HDD / CDD:</span>
-              <span class="popup-val">${station.hdd} / ${station.cdd}</span>
-            </div>
-          </div>
-        `;
-
-        marker.bindPopup(popupContent);
-        marker.bindTooltip(station.name, { direction: 'top', offset: [0, -6] });
-
-        marker.on('click', () => {
-          document.getElementById('station-name').textContent = station.name;
+        m.bindPopup(`
+          <div class="popup-title">${s.name}</div>
+          <div class="popup-row"><span class="popup-label">Division:</span><span class="popup-val">${s.division}</span></div>
+          <div class="popup-row"><span class="popup-label">Avg High:</span><span class="popup-val">${s.tmax}°F</span></div>
+          <div class="popup-row"><span class="popup-label">Avg Low:</span><span class="popup-val">${s.tmin}°F</span></div>
+          <div class="popup-row"><span class="popup-label">Total Precip:</span><span class="popup-val">${s.precip}"</span></div>
+          <div class="popup-row"><span class="popup-label">HDD / CDD:</span><span class="popup-val">${s.hdd} / ${s.cdd}</span></div>
+        `);
+        m.bindTooltip(s.name, { direction: 'top', offset: [0, -6] });
+        m.on('click', () => {
+          document.getElementById('station-name').textContent = s.name;
           document.getElementById('station-details').innerHTML = `
-            <div class="info-row">
-              <span class="info-label">Division:</span>
-              <span class="info-value">${station.division}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Avg High:</span>
-              <span class="info-value">${station.tmax}°F</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Avg Low:</span>
-              <span class="info-value">${station.tmin}°F</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Avg Temp:</span>
-              <span class="info-value">${station.tavg}°F</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Departure:</span>
-              <span class="info-value">${station.tavgDfn}°F</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Total Precip:</span>
-              <span class="info-value">${station.precip}"</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Max Precip:</span>
-              <span class="info-value">${station.precipMax}"</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Rain Days:</span>
-              <span class="info-value">${station.precipDays}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">HDD:</span>
-              <span class="info-value">${station.hdd}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">CDD:</span>
-              <span class="info-value">${station.cdd}</span>
-            </div>
+            <div class="info-row"><span class="info-label">Division:</span><span class="info-value">${s.division}</span></div>
+            <div class="info-row"><span class="info-label">Avg High:</span><span class="info-value">${s.tmax}°F</span></div>
+            <div class="info-row"><span class="info-label">Avg Low:</span><span class="info-value">${s.tmin}°F</span></div>
+            <div class="info-row"><span class="info-label">Avg Temp:</span><span class="info-value">${s.tavg}°F</span></div>
+            <div class="info-row"><span class="info-label">Departure:</span><span class="info-value">${s.tavgDfn}°F</span></div>
+            <div class="info-row"><span class="info-label">Total Precip:</span><span class="info-value">${s.precip}"</span></div>
+            <div class="info-row"><span class="info-label">Max Precip:</span><span class="info-value">${s.precipMax}"</span></div>
+            <div class="info-row"><span class="info-label">Rain Days:</span><span class="info-value">${s.precipDays}</span></div>
+            <div class="info-row"><span class="info-label">HDD:</span><span class="info-value">${s.hdd}</span></div>
+            <div class="info-row"><span class="info-label">CDD:</span><span class="info-value">${s.cdd}</span></div>
           `;
           document.getElementById('station-card').style.display = 'block';
         });
-
-        clustersLayer.addLayer(marker);
+        layers.stations.addLayer(m);
       });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //  UTILITIES
-    // ═══════════════════════════════════════════════════════════════
-    
     function showStatus(msg, type) {
-      const status = document.getElementById('status');
-      status.innerHTML = msg;
-      status.className = type;
+      const s = document.getElementById('status');
+      s.innerHTML = msg;
+      s.className = type;
     }
   </script>
-
 </body>
 </html>
