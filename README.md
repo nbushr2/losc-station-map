@@ -1,81 +1,34 @@
-# Louisiana Weather Station Network
+# Louisiana Weather Station Map
 
-Interactive map and data repository for Louisiana Office of State Climatology (LOSC) weather stations.
+Interactive map of Louisiana weather stations with dynamic ACIS API data fetching.
 
-## 🗺️ **Live Map**
+## Features
 
-View the interactive station map: [https://nbushr2.github.io/losc-station-map/](https://nbushr2.github.io/losc-station-map/)
+- 🗺️ Interactive Louisiana map with 150+ weather stations
+- 📅 User-selectable date ranges
+- 🔄 Real-time data from ACIS API
+- 📊 Station details with temperature and precipitation data
+- 📱 Mobile responsive
 
-## 📊 **About**
+## Live Demo
 
-This repository hosts:
-- Interactive Leaflet.js map of 150+ Louisiana weather stations
-- Historical climate data and observations
-- Parish and state boundary GeoJSON files
-- Automated data update scripts
+https://nbushr2.github.io/losc-station-map/
 
-## 📁 **Repository Structure**
+## Usage
 
-```
-losc-station-map/
-├── index.html                    # Interactive map interface
-├── data/
-│   ├── louisiana_state_boundary.geojson
-│   ├── louisiana_parishes.geojson
-│   ├── weather_summary_with_coords.csv
-│   └── station_list.csv
-└── scripts/
-    └── weather_summary_with_coordinates.py
-```
+1. Visit the site
+2. Select start and end dates (or use quick select)
+3. Click "Fetch Data"
+4. Click any station marker for details
 
-## 🔄 **Data Updates**
+## Data Source
 
-Station data is updated daily via ACIS API. Last update: [Date]
+- **ACIS API**: Applied Climate Information System (NOAA RCC)
+- **Stations**: Louisiana COOP network
+- **Updates**: Real-time on user request
 
-To manually update:
-```bash
-python scripts/weather_summary_with_coordinates.py
-```
-
-## 📥 **Downloads**
-
-- [Station List CSV](./data/station_list.csv)
-- [Latest Weather Summary](./data/weather_summary_with_coords.csv)
-- [Parish Boundaries GeoJSON](./data/louisiana_parishes.geojson)
-- [State Boundary GeoJSON](./data/louisiana_state_boundary.geojson)
-
-## 🛠️ **Technologies**
-
-- **Leaflet.js** - Interactive mapping
-- **MarkerCluster** - Station clustering
-- **Python** - Data fetching and processing
-- **ACIS API** - Climate data source
-
-## 📖 **Data Sources**
-
-- **NOAA ACIS** - Applied Climate Information System
-- **NWS COOP** - Cooperative Observer Program
-- **LOSC** - Louisiana Office of State Climatology
-
-## 📧 **Contact**
+## Credits
 
 Louisiana Office of State Climatology  
 Louisiana State University  
-Email: jgrymes@lsu.edu  
-Website: https://climate.lsu.edu/
-
-## 📄 **License**
-
-Data provided by NOAA and LOSC. Please cite appropriately when using in publications.
-
-## 🙏 **Citation**
-
-```
-Louisiana Office of State Climatology (LOSC). [Year]. Louisiana Weather Station Data. 
-Louisiana State University. Retrieved from https://climate.lsu.edu/
-```
-
----
-
-**Maintained by:** Louisiana Office of State Climatology  
-**Last Updated:** [Date]
+Email: jgrymes@lsu.edu
