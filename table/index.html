@@ -1,1 +1,539 @@
 
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LOSC Station Tables</title>
+
+  <!-- Optional: DataTables for sorting/search/paging -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-dt@2.1.8/css/dataTables.dataTables.min.css">
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:18px;line-height:1.35}
+    .wrap{max-width:1200px;margin:0 auto}
+    h1{margin:0 0 10px}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end;padding:12px;border:1px solid #ddd;border-radius:12px}
+    .controls label{font-size:12px;font-weight:700;display:block;margin-bottom:6px}
+    .controls input{padding:8px;border:1px solid #ccc;border-radius:8px}
+    .controls button{padding:10px 14px;border:0;border-radius:10px;font-weight:800;cursor:pointer;background:#461D7C;color:#fff}
+    .controls button:disabled{opacity:.6;cursor:not-allowed}
+    .note{margin:10px 0 18px;color:#444}
+    .status{margin:12px 0;padding:10px;border-radius:10px;display:none}
+    .status.ok{background:#e8f5e9;color:#1b5e20;display:block}
+    .status.err{background:#ffebee;color:#b71c1c;display:block}
+    .status.load{background:#e3f2fd;color:#0d47a1;display:block}
+    table{width:100%;border-collapse:collapse}
+    .section{margin:24px 0}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px}
+    .subttl{margin:0 0 10px}
+    .small{font-size:12px;color:#666}
+    .download{margin-left:auto;background:#FDD023;color:#2C0F4F}
+    .divider{height:1px;background:#eee;margin:18px 0}
+    .div-title{margin:22px 0 10px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Station Summaries by Division</h1>
+  <div class="note">
+    Generates the same “Divisional and Statewide Summary” + “Station Summaries by Division” tables used in the weekly newsletter.
+  </div>
+
+  <div class="controls">
+    <div>
+      <label>Start date</label>
+      <input type="date" id="start" />
+    </div>
+    <div>
+      <label>End date</label>
+      <input type="date" id="end" />
+    </div>
+    <button id="run">Fetch & Build Tables</button>
+    <button class="download" id="csvBtn" disabled>Download CSV</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div class="section card">
+    <h2 class="subttl">Divisional and Statewide Summary</h2>
+    <div class="small">Division metrics are computed from station results returned by ACIS for the selected date range.</div>
+    <div class="divider"></div>
+    <table id="divSummary" class="display"></table>
+  </div>
+
+  <div class="section card">
+    <h2 class="subttl">Station Summaries by Division</h2>
+    <div class="small">Each division table includes a “Division” row at the bottom.</div>
+    <div class="divider"></div>
+    <div id="byDivision"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.1.8/js/dataTables.min.js"></script>
+<script>
+/** -----------------------------
+ *  CONFIG
+ *  ----------------------------- */
+const STATION_LIST_PATH = "../data/AgStats_co-op_list_Jay_KBedits1.txt";
+
+// Division labels used in the newsletter summary table (p.4) :contentReference[oaicite:4]{index=4}
+const DIVISION_NAME = {
+  "LA01":"Northwest",
+  "LA02":"North Central",
+  "LA03":"Northeast",
+  "LA04":"West Central",
+  "LA05":"Central",
+  "LA06":"East Central",
+  "LA07":"Southwest",
+  "LA08":"South Central",
+  "LA09":"Southeast"
+};
+
+// ACIS endpoint + elems pattern mirrors your Python script :contentReference[oaicite:5]{index=5}
+const ACIS_URL = "https://data.rcc-acis.org/MultiStnData";
+const ELEMS = [
+  { name:"maxt", interval:"dly", smry:"mean", smry_only:1 },
+  { name:"mint", interval:"dly", smry:"mean", smry_only:1 },
+  { name:"avgt", interval:"dly", smry:"mean", smry_only:1 },
+  { name:"avgt", interval:"dly", smry:"mean", smry_only:1, normal:"departure" },
+  { name:"maxt", interval:"dly", smry:"max",  smry_only:1 },
+  { name:"mint", interval:"dly", smry:"min",  smry_only:1 },
+  { name:"hdd",  interval:"dly", smry:"sum",  smry_only:1 },
+  { name:"hdd",  interval:"dly", smry:"sum",  smry_only:1, normal:"departure" },
+  { name:"cdd",  interval:"dly", smry:"sum",  smry_only:1 },
+  { name:"cdd",  interval:"dly", smry:"sum",  smry_only:1, normal:"departure" },
+  { name:"pcpn", interval:"dly", smry:"sum",  smry_only:1 },
+  { name:"pcpn", interval:"dly", smry:"sum",  smry_only:1, normal:"1" },        // normal precip
+  { name:"pcpn", interval:"dly", smry:"max",  smry_only:1 },                     // 1-day max
+  { name:"pcpn", interval:"dly", smry:{ reduce:"max", add:"date" }, smry_only:1 },// p-max date
+  { name:"pcpn", interval:"dly", smry:"cnt_ge_0.01", duration:"dly", smry_only:1 }// rain days
+];
+
+/** -----------------------------
+ *  HELPERS
+ *  ----------------------------- */
+const $ = (id)=>document.getElementById(id);
+function setStatus(msg, cls){
+  const el = $("status");
+  el.textContent = msg;
+  el.className = "status " + cls;
+}
+function yyyymmddFromInput(value){
+  if(!value) return "";
+  return value.replaceAll("-","");
+}
+function toNum(v){
+  if(v === undefined || v === null) return null;
+  if(v === "M" || v === "") return null;
+  if(v === "T") return 0;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function fmt1(v){ return (v===null||v===undefined) ? "-" : Number(v).toFixed(1); }
+function fmt0(v){ return (v===null||v===undefined) ? "-" : String(Math.round(v)); }
+function fmt2(v){ return (v===null||v===undefined) ? "-" : Number(v).toFixed(2); }
+function safeDiv(a,b){
+  if(a===null||b===null||b===0) return null;
+  return (a/b)*100;
+}
+
+// Parse your station list file exactly like your map/Python: ID + last-2 digits = division :contentReference[oaicite:6]{index=6}
+async function loadStations(){
+  const res = await fetch(STATION_LIST_PATH, {cache:"no-store"});
+  if(!res.ok) throw new Error("Station list not found: " + STATION_LIST_PATH);
+  const text = await res.text();
+  const stations = {};
+  const ids = [];
+  text.split(/\r?\n/).forEach(line=>{
+    line=line.trim();
+    if(!line) return;
+    const parts=line.split(/\s+/);
+    if(parts.length<2) return;
+    const rawId = parts[0];
+    const name = parts.slice(1).join(" ");
+    const stationId = rawId.slice(0,-2);
+    const div = "LA" + rawId.slice(-2);
+    stations[stationId] = {name, div};
+    ids.push(stationId);
+  });
+  return {stations, ids};
+}
+
+async function fetchACIS(ids, sdate, edate){
+  const payload = {
+    sids: ids.join(","),
+    sdate, edate,
+    meta: ["name","climdiv","sids"],
+    elems: ELEMS
+  };
+  const res = await fetch(ACIS_URL, {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error("ACIS request failed: " + res.status);
+  return await res.json();
+}
+
+// Convert ACIS response into station rows with the newsletter columns :contentReference[oaicite:7]{index=7}
+function processStations(api, stationLookup){
+  const rows = [];
+  const data = api.data || [];
+  for(const st of data){
+    const meta = st.meta || {};
+    const sid0 = (meta.sids && meta.sids[0]) ? String(meta.sids[0]).trim() : null;
+    if(!sid0) continue;
+
+    const lookup = stationLookup[sid0] || {};
+    const stationName = meta.name || lookup.name || "Unknown";
+    const div = lookup.div || meta.climdiv || "Unknown";
+    const sm = st.smry || [];
+
+    const avgTmax   = toNum(sm[0]);
+    const avgTmin   = toNum(sm[1]);
+    const tavg      = toNum(sm[2]);
+    const tavgDfn   = toNum(sm[3]);
+    const hiTmax    = toNum(sm[4]);
+    const loTmin    = toNum(sm[5]);
+
+    const hdd       = toNum(sm[6]);
+    const hddDfn    = toNum(sm[7]);
+    const hddNorm   = (hdd!==null && hddDfn!==null) ? (hdd - hddDfn) : null;
+    const hddPct    = safeDiv(hdd, hddNorm);
+
+    const cdd       = toNum(sm[8]);
+    const cddDfn    = toNum(sm[9]);
+    const cddNorm   = (cdd!==null && cddDfn!==null) ? (cdd - cddDfn) : null;
+    const cddPct    = safeDiv(cdd, cddNorm);
+
+    const totP      = toNum(sm[10]);
+    const normP     = toNum(sm[11]);
+    const pDfn      = (totP!==null && normP!==null) ? (totP - normP) : null;
+
+    const pMax1d    = toNum(sm[12]);
+    const pMaxDate  = (Array.isArray(sm[13]) && sm[13].length>1) ? sm[13][1] : null;
+    const rainDays  = toNum(sm[14]);
+
+    rows.push({
+      div, station: stationName,
+      avgTmax, avgTmin, tavg, tavgDfn,
+      hiTmax, loTmin,
+      hdd, hddPct,
+      cdd, cddPct,
+      totP, pDfn,
+      pMax1d, pMaxDate,
+      rainDays
+    });
+  }
+  return rows;
+}
+
+// Division summary logic matches newsletter: means for avg columns, max/min for extremes, etc. :contentReference[oaicite:8]{index=8}
+function summarizeDivision(rows){
+  const n = rows.length;
+  const mean = (arr)=> {
+    const vals = arr.filter(v=>v!==null);
+    if(!vals.length) return null;
+    return vals.reduce((a,b)=>a+b,0)/vals.length;
+  };
+  const max = (arr)=> {
+    const vals = arr.filter(v=>v!==null);
+    if(!vals.length) return null;
+    return Math.max(...vals);
+  };
+  const min = (arr)=> {
+    const vals = arr.filter(v=>v!==null);
+    if(!vals.length) return null;
+    return Math.min(...vals);
+  };
+
+  return {
+    avgTmax: mean(rows.map(r=>r.avgTmax)),
+    avgTmin: mean(rows.map(r=>r.avgTmin)),
+    tavg:    mean(rows.map(r=>r.tavg)),
+    tavgDfn: mean(rows.map(r=>r.tavgDfn)),
+    hiTmax:  max(rows.map(r=>r.hiTmax)),
+    loTmin:  min(rows.map(r=>r.loTmin)),
+    hdd:     mean(rows.map(r=>r.hdd)),
+    hddPct:  mean(rows.map(r=>r.hddPct)),
+    cdd:     mean(rows.map(r=>r.cdd)),
+    cddPct:  mean(rows.map(r=>r.cddPct)),
+    totP:    mean(rows.map(r=>r.totP)),
+    pDfn:    mean(rows.map(r=>r.pDfn)),
+    pMax1d:  max(rows.map(r=>r.pMax1d)),
+    rainDays:max(rows.map(r=>r.rainDays))
+  };
+}
+
+// State summary is computed from division summaries (similar to p.4 “STATE” row) :contentReference[oaicite:9]{index=9}
+function summarizeState(divSummaries){
+  const rows = Object.values(divSummaries);
+  return summarizeDivision(rows.map(d=>({
+    avgTmax:d.avgTmax, avgTmin:d.avgTmin, tavg:d.tavg, tavgDfn:d.tavgDfn,
+    hiTmax:d.hiTmax, loTmin:d.loTmin,
+    hdd:d.hdd, hddPct:d.hddPct, cdd:d.cdd, cddPct:d.cddPct,
+    totP:d.totP, pDfn:d.pDfn, pMax1d:d.pMax1d, rainDays:d.rainDays
+  })));
+}
+
+function buildDivSummaryTable(divSummaries){
+  const cols = [
+    {title:"Divisions", data:"name"},
+    {title:"Avg T-Max", data:"avgTmax", render:v=>fmt1(v)},
+    {title:"Avg T-Min", data:"avgTmin", render:v=>fmt1(v)},
+    {title:"T-Avg (°F)", data:"tavg", render:v=>fmt1(v)},
+    {title:"T-Avg DFN", data:"tavgDfn", render:v=>fmt1(v)},
+    {title:"Highest T-Max", data:"hiTmax", render:v=>fmt0(v)},
+    {title:"Lowest T-Min", data:"loTmin", render:v=>fmt0(v)},
+    {title:"HDD", data:"hdd", render:v=>fmt0(v)},
+    {title:"HDD %Norm", data:"hddPct", render:v=> (v==null? "-": Math.round(v))},
+    {title:"CDD", data:"cdd", render:v=>fmt0(v)},
+    {title:"CDD %Norm", data:"cddPct", render:v=> (v==null? "-": Math.round(v))},
+    {title:"Total P (in.)", data:"totP", render:v=>fmt2(v)},
+    {title:"P-DFN (in.)", data:"pDfn", render:v=>fmt2(v)},
+    {title:"1-Day P-Max", data:"pMax1d", render:v=>fmt2(v)},
+    {title:"Rain Days", data:"rainDays", render:v=>fmt0(v)}
+  ];
+
+  const table = document.getElementById("divSummary");
+  table.innerHTML = "";
+
+  const data = [];
+  // sort divisions LA01..LA09
+  Object.keys(DIVISION_NAME).sort().forEach(code=>{
+    const d = divSummaries[code];
+    if(!d) return;
+    data.push({ name: DIVISION_NAME[code], ...d });
+  });
+
+  // add STATE row
+  const state = summarizeState(divSummaries);
+  data.push({ name:"STATE", ...state });
+
+  new DataTable("#divSummary", {
+    data,
+    columns: cols,
+    paging:false,
+    searching:false,
+    info:false,
+    order:[]
+  });
+}
+
+function buildStationTables(allRows){
+  const container = document.getElementById("byDivision");
+  container.innerHTML = "";
+
+  // group by division
+  const grouped = {};
+  for(const r of allRows){
+    if(!grouped[r.div]) grouped[r.div] = [];
+    grouped[r.div].push(r);
+  }
+
+  // render in LA01..LA09 order
+  for(const divCode of Object.keys(DIVISION_NAME).sort()){
+    const rows = grouped[divCode] || [];
+    if(!rows.length) continue;
+
+    rows.sort((a,b)=>a.station.localeCompare(b.station));
+
+    // add Division summary row at bottom (like newsletter station tables) :contentReference[oaicite:10]{index=10}
+    const divSum = summarizeDivision(rows);
+    const displayRows = rows.map(r=>({
+      station:r.station,
+      avgTmax:r.avgTmax, avgTmin:r.avgTmin, tavg:r.tavg, tavgDfn:r.tavgDfn,
+      hiTmax:r.hiTmax, loTmin:r.loTmin,
+      hdd:r.hdd, hddPct:r.hddPct,
+      cdd:r.cdd, cddPct:r.cddPct,
+      totP:r.totP, pDfn:r.pDfn,
+      pMax1d:r.pMax1d, pMaxDate:r.pMaxDate,
+      rainDays:r.rainDays,
+      _isDiv:false
+    }));
+
+    displayRows.push({
+      station:"Division",
+      avgTmax:divSum.avgTmax, avgTmin:divSum.avgTmin, tavg:divSum.tavg, tavgDfn:divSum.tavgDfn,
+      hiTmax:divSum.hiTmax, loTmin:divSum.loTmin,
+      hdd:divSum.hdd, hddPct:divSum.hddPct,
+      cdd:divSum.cdd, cddPct:divSum.cddPct,
+      totP:divSum.totP, pDfn:divSum.pDfn,
+      pMax1d:divSum.pMax1d, pMaxDate:null,
+      rainDays:divSum.rainDays,
+      _isDiv:true
+    });
+
+    const title = document.createElement("h3");
+    title.className = "div-title";
+    title.textContent = `${DIVISION_NAME[divCode]} Division`;
+    container.appendChild(title);
+
+    const t = document.createElement("table");
+    const id = `tbl_${divCode}`;
+    t.id = id;
+    t.className = "display";
+    container.appendChild(t);
+
+    const cols = [
+      {title:"Stations", data:"station"},
+      {title:"Avg T-Max", data:"avgTmax", render:v=>fmt1(v)},
+      {title:"Avg T-Min", data:"avgTmin", render:v=>fmt1(v)},
+      {title:"T-Avg", data:"tavg", render:v=>fmt1(v)},
+      {title:"T-Avg DFN", data:"tavgDfn", render:v=>fmt1(v)},
+      {title:"Highest T-Max", data:"hiTmax", render:v=>fmt0(v)},
+      {title:"Lowest T-Min", data:"loTmin", render:v=>fmt0(v)},
+      {title:"HDD", data:"hdd", render:v=>fmt0(v)},
+      {title:"HDD %Norm", data:"hddPct", render:v=> (v==null? "-": Math.round(v))},
+      {title:"CDD", data:"cdd", render:v=>fmt0(v)},
+      {title:"CDD %Norm", data:"cddPct", render:v=> (v==null? "-": Math.round(v))},
+      {title:"Total P", data:"totP", render:v=>fmt2(v)},
+      {title:"P-DFN", data:"pDfn", render:v=>fmt2(v)},
+      {title:"1-Day P-Max", data:"pMax1d", render:v=>fmt2(v)},
+      {title:"P-Max Date", data:"pMaxDate", render:v=> (v||"-")},
+      {title:"Rain Days", data:"rainDays", render:v=>fmt0(v)}
+    ];
+
+    new DataTable(`#${id}`, {
+      data: displayRows,
+      columns: cols,
+      pageLength: 25,
+      order: [],
+      createdRow: function(row, data){
+        if(data._isDiv){
+          row.style.fontWeight = "800";
+          row.style.background = "#f3f3f3";
+        }
+      }
+    });
+  }
+}
+
+// CSV download from station rows + division/state summary
+function buildCSV(allRows, divSummaries){
+  const header = [
+    "DivisionCode","DivisionName","Station",
+    "AvgTmax","AvgTmin","Tavg","TavgDfn",
+    "HighestTmax","LowestTmin",
+    "HDD","HDDpctNorm","CDD","CDDpctNorm",
+    "TotalP","P_DFN","PMax1d","PMaxDate","RainDays"
+  ];
+  const lines = [header.join(",")];
+
+  for(const r of allRows){
+    const divName = DIVISION_NAME[r.div] || r.div;
+    lines.push([
+      r.div, `"${divName}"`, `"${(r.station||"").replaceAll('"','""')}"`,
+      r.avgTmax ?? "", r.avgTmin ?? "", r.tavg ?? "", r.tavgDfn ?? "",
+      r.hiTmax ?? "", r.loTmin ?? "",
+      r.hdd ?? "", r.hddPct ?? "", r.cdd ?? "", r.cddPct ?? "",
+      r.totP ?? "", r.pDfn ?? "", r.pMax1d ?? "", (r.pMaxDate||""), r.rainDays ?? ""
+    ].join(","));
+  }
+
+  // add a blank line + division summary block
+  lines.push("");
+  lines.push("DIVISION_SUMMARY_BLOCK");
+  lines.push(["DivisionName","AvgTmax","AvgTmin","Tavg","TavgDfn","HighestTmax","LowestTmin","HDD","HDDpctNorm","CDD","CDDpctNorm","TotalP","P_DFN","PMax1d","RainDays"].join(","));
+
+  Object.keys(DIVISION_NAME).sort().forEach(code=>{
+    const d = divSummaries[code];
+    if(!d) return;
+    lines.push([
+      `"${DIVISION_NAME[code]}"`,
+      d.avgTmax ?? "", d.avgTmin ?? "", d.tavg ?? "", d.tavgDfn ?? "",
+      d.hiTmax ?? "", d.loTmin ?? "",
+      d.hdd ?? "", d.hddPct ?? "", d.cdd ?? "", d.cddPct ?? "",
+      d.totP ?? "", d.pDfn ?? "", d.pMax1d ?? "", d.rainDays ?? ""
+    ].join(","));
+  });
+
+  const state = summarizeState(divSummaries);
+  lines.push([
+    `"STATE"`,
+    state.avgTmax ?? "", state.avgTmin ?? "", state.tavg ?? "", state.tavgDfn ?? "",
+    state.hiTmax ?? "", state.loTmin ?? "",
+    state.hdd ?? "", state.hddPct ?? "", state.cdd ?? "", state.cddPct ?? "",
+    state.totP ?? "", state.pDfn ?? "", state.pMax1d ?? "", state.rainDays ?? ""
+  ].join(","));
+
+  return lines.join("\n");
+}
+
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** -----------------------------
+ *  RUN
+ *  ----------------------------- */
+function setDefaultDates(){
+  const end = new Date();
+  end.setDate(end.getDate()-1);
+  const start = new Date(end);
+  start.setDate(start.getDate()-6);
+  $("start").valueAsDate = start;
+  $("end").valueAsDate = end;
+}
+
+let lastCSV = null;
+
+$("run").addEventListener("click", async ()=>{
+  try{
+    const s = yyyymmddFromInput($("start").value);
+    const e = yyyymmddFromInput($("end").value);
+    if(!s || !e) throw new Error("Select both start and end dates.");
+
+    $("run").disabled = true;
+    $("csvBtn").disabled = true;
+    setStatus("Loading station list…", "load");
+
+    const {stations, ids} = await loadStations();
+
+    setStatus("Fetching ACIS summaries…", "load");
+    const api = await fetchACIS(ids, s, e);
+
+    setStatus("Processing & building tables…", "load");
+    const rows = processStations(api, stations);
+
+    // Build division summaries from station rows
+    const divSummaries = {};
+    for(const code of Object.keys(DIVISION_NAME)){
+      const divRows = rows.filter(r=>r.div === code);
+      if(divRows.length) divSummaries[code] = summarizeDivision(divRows);
+    }
+
+    buildDivSummaryTable(divSummaries);
+    buildStationTables(rows);
+
+    lastCSV = buildCSV(rows, divSummaries);
+    $("csvBtn").disabled = false;
+
+    setStatus(`Done. Stations processed: ${rows.length}`, "ok");
+  }catch(err){
+    console.error(err);
+    setStatus(err.message || String(err), "err");
+  }finally{
+    $("run").disabled = false;
+  }
+});
+
+$("csvBtn").addEventListener("click", ()=>{
+  if(!lastCSV) return;
+  const s = $("start").value;
+  const e = $("end").value;
+  downloadText(`losc_station_tables_${s}_to_${e}.csv`, lastCSV);
+});
+
+setDefaultDates();
+</script>
+</body>
+</html>
