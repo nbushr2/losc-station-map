@@ -4,7 +4,7 @@ Interactive map and data repository for Louisiana Office of State Climatology (L
 
 ## 🗺️ **Live Map**
 
-View the interactive station map: [https://YOUR-USERNAME.github.io/losc-station-map/](https://YOUR-USERNAME.github.io/losc-station-map/)
+View the interactive station map: [https://nbushr2.github.io/losc-station-map/](https://nbushr2.github.io/losc-station-map/)
 
 ## 📊 **About**
 
