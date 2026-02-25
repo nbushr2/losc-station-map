@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pcf-stylesheet path="/_resources_fierce/xsl/interior.xsl" title="HTML" extension="php"?>
+<!DOCTYPE document SYSTEM "http://commons.omniupdate.com/dtd/standard.dtd"> 
+<document xmlns:ouc="http://omniupdate.com/XSL/Variables">
+	<headcode>
+		<!-- Simple Dashboard Styling -->
+		<style>
+			.losc-embed-section {
+				max-width: 1500px;
+				margin: 0 auto 35px auto;
+			}
+			.losc-embed-section h3 {
+				background: linear-gradient(135deg, #461D7C, #2C0F4F);
+				color: white;
+				padding: 15px 20px;
+				margin: 0 0 0 0;
+				border-radius: 8px 8px 0 0;
+				font-size: 1.2rem;
+			}
+			.losc-embed-section iframe {
+				width: 100%;
+				border: 2px solid #e0e0e0;
+				border-top: none;
+				border-radius: 0 0 8px 8px;
+				display: block;
+			}
+			.losc-divider {
+				height: 2px;
+				background: linear-gradient(to right, #461D7C, #FDD023, #461D7C);
+				margin: 40px auto;
+				max-width: 200px;
+			}
+		</style>
+	</headcode>
+	<bodycode></bodycode>
+	<footcode></footcode>
+	<ouc:info><tcf>interior.tcf</tcf><tmpl>interior.tmpl</tmpl></ouc:info>
+	<ouc:properties label="metadata">
+		<title>Louisiana Weather Station Dashboard | LOSC</title>
+		<meta name="Description" content="Interactive Louisiana weather station map and data tables from the Louisiana Office of State Climatology" />
+		<meta name="Keywords" content="Louisiana weather stations, climate data, LOSC, weather map, station tables" />
+	</ouc:properties>
+	<ouc:properties label="config">
+		<parameter name="breadcrumb" type="text" group="Everyone" prompt="Breadcrumb" alt="Please enter the breadcrumb text. This is not used on index pages.">Station Data Dashboard</parameter>
+	</ouc:properties>
+	
+	<ouc:div label="main-content" group="Everyone" button-text="Main Content">
+		<ouc:editor csspath="/_resources_fierce/ou/editor/wysiwyg.css" cssmenu="/_resources_fierce/ou/editor/styles.txt" wysiwyg-class="maincontent"/>
+		
+		<h2 style="margin-bottom:20px;">Louisiana Weather Stations Interactive Dashboard</h2>
+		
+		<p style="margin-bottom:25px;">
+			Explore Louisiana's weather station network through our interactive map and access detailed station data tables with divisional summaries.
+		</p>
+		
+		<!-- ===== Interactive Map Section ===== -->
+		<div class="losc-embed-section">
+			<h3>🗺️ Interactive Map</h3>
+			<iframe
+				src="https://nbushr2.github.io/losc-station-map/"
+				title="Louisiana Weather Stations Map"
+				style="height:700px;"
+				loading="lazy"
+				allow="geolocation">
+			</iframe>
+		</div>
+		
+		<p style="max-width:1500px; margin:0 auto 15px auto; padding:15px; background:#e8f5e9; border-left:4px solid #4caf50; border-radius:6px;">
+			<strong>💡 Map Instructions:</strong> Select dates, click "Fetch Data", then click station markers for weather details. Toggle layers on/off using the checkboxes.
+		</p>
+		
+		<!-- Divider -->
+		<div class="losc-divider"></div>
+		
+		<!-- ===== Station Tables Section ===== -->
+		<div class="losc-embed-section">
+			<h3>📊 Station Data Tables</h3>
+			<iframe
+				src="https://nbushr2.github.io/losc-station-map/tables.html"
+				title="Louisiana Weather Station Data Tables"
+				style="height:900px;"
+				loading="lazy">
+			</iframe>
+		</div>
+		
+		<p style="max-width:1500px; margin:0 auto 30px auto; padding:15px; background:#e3f2fd; border-left:4px solid #2196f3; border-radius:6px;">
+			<strong>💡 Table Instructions:</strong> Select date range, click "Generate Tables" to create divisional summaries. Export to Excel or CSV using the buttons.
+		</p>
+		
+	</ouc:div>
+	
+	<!--
+	<ouc:div label="additional-content" group="Everyone" button-text="Additional Content">
+		<ouc:editor csspath="/_resources_fierce/ou/editor/wysiwyg.css" cssmenu="/_resources_fierce/ou/editor/styles.txt" wysiwyg-class="additional-content"/>
+	</ouc:div>
+	-->
+</document>

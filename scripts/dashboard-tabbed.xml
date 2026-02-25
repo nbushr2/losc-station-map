@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pcf-stylesheet path="/_resources_fierce/xsl/interior.xsl" title="HTML" extension="php"?>
+<!DOCTYPE document SYSTEM "http://commons.omniupdate.com/dtd/standard.dtd"> 
+<document xmlns:ouc="http://omniupdate.com/XSL/Variables">
+	<headcode>
+		<!-- Tabbed Dashboard Styling -->
+		<style>
+			.losc-dashboard {
+				max-width: 1500px;
+				margin: 0 auto;
+			}
+			
+			/* Tab Buttons */
+			.tab-buttons {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 0;
+				border-bottom: 3px solid #461D7C;
+				background: #f8f9fa;
+				padding: 12px 12px 0 12px;
+				border-radius: 8px 8px 0 0;
+			}
+			
+			.tab-btn {
+				background: white;
+				border: 2px solid #ddd;
+				border-bottom: none;
+				padding: 12px 28px;
+				font-size: 1.05rem;
+				font-weight: 700;
+				color: #666;
+				cursor: pointer;
+				border-radius: 6px 6px 0 0;
+				transition: all 0.2s;
+			}
+			
+			.tab-btn:hover {
+				background: #f0f0f0;
+				color: #461D7C;
+			}
+			
+			.tab-btn.active {
+				background: #461D7C;
+				color: white;
+				border-color: #461D7C;
+				position: relative;
+			}
+			
+			.tab-btn.active::after {
+				content: '';
+				position: absolute;
+				bottom: -3px;
+				left: 0;
+				right: 0;
+				height: 3px;
+				background: #FDD023;
+			}
+			
+			/* Tab Content */
+			.tab-content {
+				display: none;
+				border: 2px solid #e0e0e0;
+				border-top: none;
+				border-radius: 0 0 8px 8px;
+			}
+			
+			.tab-content.active {
+				display: block;
+			}
+			
+			.tab-content iframe {
+				width: 100%;
+				border: 0;
+				display: block;
+			}
+			
+			/* Info Box */
+			.info-tip {
+				margin-top: 15px;
+				padding: 12px 18px;
+				border-radius: 6px;
+				font-size: 0.95rem;
+			}
+			
+			.info-tip.map-tip {
+				background: #e8f5e9;
+				border-left: 4px solid #4caf50;
+			}
+			
+			.info-tip.table-tip {
+				background: #e3f2fd;
+				border-left: 4px solid #2196f3;
+			}
+			
+			@media (max-width: 768px) {
+				.tab-buttons {
+					flex-direction: column;
+					gap: 0;
+				}
+				.tab-btn {
+					border-radius: 0;
+					border: none;
+					border-bottom: 1px solid #ddd;
+				}
+				.tab-btn.active::after {
+					width: 4px;
+					height: 100%;
+					left: 0;
+					top: 0;
+					bottom: auto;
+				}
+			}
+		</style>
+	</headcode>
+	
+	<bodycode></bodycode>
+	
+	<footcode>
+		<!-- Tab Switching Script -->
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const tabs = document.querySelectorAll('.tab-btn');
+				const contents = document.querySelectorAll('.tab-content');
+				const tips = document.querySelectorAll('.info-tip');
+				
+				tabs.forEach((tab, index) => {
+					tab.addEventListener('click', function() {
+						// Remove active from all
+						tabs.forEach(t => t.classList.remove('active'));
+						contents.forEach(c => c.classList.remove('active'));
+						tips.forEach(t => t.style.display = 'none');
+						
+						// Add active to clicked
+						tab.classList.add('active');
+						contents[index].classList.add('active');
+						if (tips[index]) tips[index].style.display = 'block';
+					});
+				});
+			});
+		</script>
+	</footcode>
+	
+	<ouc:info><tcf>interior.tcf</tcf><tmpl>interior.tmpl</tmpl></ouc:info>
+	
+	<ouc:properties label="metadata">
+		<title>Louisiana Weather Station Dashboard | LOSC</title>
+		<meta name="Description" content="Interactive Louisiana weather station map and data tables from the Louisiana Office of State Climatology" />
+		<meta name="Keywords" content="Louisiana weather stations, climate data, LOSC, weather map, station tables" />
+	</ouc:properties>
+	
+	<ouc:properties label="config">
+		<parameter name="breadcrumb" type="text" group="Everyone" prompt="Breadcrumb" alt="Please enter the breadcrumb text. This is not used on index pages.">Station Data Dashboard</parameter>
+	</ouc:properties>
+	
+	<ouc:div label="main-content" group="Everyone" button-text="Main Content">
+		<ouc:editor csspath="/_resources_fierce/ou/editor/wysiwyg.css" cssmenu="/_resources_fierce/ou/editor/styles.txt" wysiwyg-class="maincontent"/>
+		
+		<h2 style="margin-bottom:15px;">Louisiana Weather Stations Interactive Dashboard</h2>
+		
+		<p style="margin-bottom:25px;">
+			Explore Louisiana's weather station network through our interactive map and access detailed station data tables with divisional summaries.
+		</p>
+		
+		<!-- Dashboard Container -->
+		<div class="losc-dashboard">
+			
+			<!-- Tab Buttons -->
+			<div class="tab-buttons">
+				<button class="tab-btn active">🗺️ Interactive Map</button>
+				<button class="tab-btn">📊 Station Tables</button>
+			</div>
+			
+			<!-- Map Tab -->
+			<div class="tab-content active">
+				<iframe
+					src="https://nbushr2.github.io/losc-station-map/"
+					title="Louisiana Weather Stations Map"
+					style="height:700px;"
+					loading="lazy"
+					allow="geolocation">
+				</iframe>
+			</div>
+			
+			<!-- Tables Tab -->
+			<div class="tab-content">
+				<iframe
+					src="https://nbushr2.github.io/losc-station-map/tables.html"
+					title="Louisiana Weather Station Tables"
+					style="height:900px;"
+					loading="lazy">
+				</iframe>
+			</div>
+			
+			<!-- Instructions (switch based on active tab) -->
+			<div class="info-tip map-tip" style="display:block;">
+				<strong>💡 How to use:</strong> Select dates in the top-left, click "Fetch Data", then click any purple marker for station details. Toggle map layers on/off.
+			</div>
+			
+			<div class="info-tip table-tip" style="display:none;">
+				<strong>💡 How to use:</strong> Select date range, click "Generate Tables" to create divisional summaries. Export to Excel or CSV using the download buttons.
+			</div>
+			
+		</div>
+		<!-- End Dashboard -->
+		
+	</ouc:div>
+	
+	<!--
+	<ouc:div label="additional-content" group="Everyone" button-text="Additional Content">
+		<ouc:editor csspath="/_resources_fierce/ou/editor/wysiwyg.css" cssmenu="/_resources_fierce/ou/editor/styles.txt" wysiwyg-class="additional-content"/>
+	</ouc:div>
+	-->
+</document>
