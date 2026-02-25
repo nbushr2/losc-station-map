@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Louisiana Weather Stations | LOSC</title>
   
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- MarkerCluster CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   
@@ -16,166 +13,195 @@
     :root {
       --lsu-purple: #461D7C;
       --lsu-gold: #FDD023;
-      --lsu-purple-dark: #2C0F4F;
-      --lsu-purple-light: #7851A9;
+      --lsu-dark: #2C0F4F;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     
-    html, body, #map {
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    /* Loading Indicator */
-    #loading {
+    /* Date Picker Bar */
+    .controls {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2000;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
       background: white;
-      padding: 2rem;
+      padding: 1rem;
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      border: 2px solid var(--lsu-gold);
+      max-width: 400px;
     }
-
-    #loading.hidden {
+    .controls h3 {
+      color: var(--lsu-purple);
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+    }
+    .date-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .date-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 0.3rem;
+    }
+    .date-group input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .date-group input:focus {
+      outline: none;
+      border-color: var(--lsu-purple);
+    }
+    .quick-select {
+      margin-bottom: 0.8rem;
+    }
+    .quick-select select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .btn {
+      width: 100%;
+      background: var(--lsu-purple);
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .btn:hover { background: var(--lsu-dark); }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    
+    #status {
+      margin-top: 0.8rem;
+      padding: 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-align: center;
       display: none;
     }
-
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid #e0e0e0;
-      border-top-color: var(--lsu-purple);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
+    #status.loading {
+      background: #e3f2fd;
+      color: #1976d2;
+      display: block;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    #status.success {
+      background: #e8f5e9;
+      color: #388e3c;
+      display: block;
     }
-
+    #status.error {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+    
+    /* Map */
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    
     /* Info Panel */
     #info-panel {
       position: absolute;
       top: 10px;
       right: 10px;
       z-index: 1000;
-      width: 350px;
+      width: 320px;
       max-height: calc(100vh - 20px);
       overflow-y: auto;
       background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(20px);
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.2);
       border: 2px solid var(--lsu-gold);
     }
-
-    #info-panel.collapsed {
-      width: auto;
-    }
-
     .panel-header {
-      background: linear-gradient(135deg, var(--lsu-purple) 0%, var(--lsu-purple-dark) 100%);
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
       color: white;
       padding: 1rem;
       font-weight: 700;
-      font-size: 1.1rem;
       border-radius: 10px 10px 0 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-
     .toggle-btn {
       background: var(--lsu-gold);
-      color: var(--lsu-purple-dark);
+      color: var(--lsu-dark);
       border: none;
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 0.9rem;
     }
-
     .panel-content {
       padding: 1rem;
     }
-
+    #info-panel.collapsed {
+      width: auto;
+    }
     #info-panel.collapsed .panel-content {
       display: none;
     }
-
-    .search-box {
-      width: 100%;
-      padding: 0.8rem;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .search-box:focus {
-      outline: none;
-      border-color: var(--lsu-purple);
-    }
-
+    
     .stats {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.8rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
       margin-bottom: 1rem;
     }
-
     .stat-box {
-      background: linear-gradient(135deg, var(--lsu-purple) 0%, var(--lsu-purple-dark) 100%);
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
       color: white;
-      padding: 1rem;
+      padding: 0.8rem;
       border-radius: 8px;
       text-align: center;
     }
-
     .stat-number {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: var(--lsu-gold);
-      font-family: Georgia, serif;
     }
-
     .stat-label {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       opacity: 0.9;
-      margin-top: 0.3rem;
+      margin-top: 0.2rem;
     }
-
+    
     .station-info {
       background: #f8f9fa;
       padding: 1rem;
       border-radius: 8px;
       border-left: 4px solid var(--lsu-gold);
-      margin-top: 1rem;
+      display: none;
     }
-
-    .station-info h3 {
+    .station-info h4 {
       color: var(--lsu-purple);
-      font-size: 1.1rem;
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.6rem;
+      font-size: 1rem;
     }
-
     .station-info p {
-      margin: 0.4rem 0;
-      font-size: 0.9rem;
+      margin: 0.3rem 0;
+      font-size: 0.85rem;
       color: #555;
     }
-
     .station-info strong {
       color: var(--lsu-purple);
     }
-
+    
     /* Legend */
     .legend {
       position: absolute;
@@ -187,450 +213,450 @@
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       border: 2px solid var(--lsu-gold);
-      font-size: 0.9rem;
     }
-
     .legend-title {
       font-weight: 700;
       color: var(--lsu-purple);
       margin-bottom: 0.5rem;
+      font-size: 0.9rem;
     }
-
     .legend-item {
       display: flex;
       align-items: center;
-      margin: 0.4rem 0;
+      margin: 0.3rem 0;
+      font-size: 0.85rem;
     }
-
-    .legend-color {
-      width: 20px;
-      height: 20px;
+    .dot {
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       margin-right: 0.5rem;
       border: 2px solid #666;
     }
-
-    /* Custom Markers */
-    .station-marker {
-      background: var(--lsu-purple);
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-
-    .marker-cluster-small {
-      background-color: rgba(70, 29, 124, 0.6);
-    }
-
-    .marker-cluster-small div {
-      background-color: rgba(70, 29, 124, 0.8);
-      color: white;
-    }
-
-    .marker-cluster-medium {
-      background-color: rgba(120, 81, 169, 0.6);
-    }
-
+    
+    /* Clusters */
+    .marker-cluster-small div,
     .marker-cluster-medium div {
-      background-color: rgba(120, 81, 169, 0.8);
-      color: white;
+      background: rgba(70,29,124,0.8) !important;
+      color: white !important;
     }
-
-    .marker-cluster-large {
-      background-color: rgba(253, 208, 35, 0.6);
-    }
-
     .marker-cluster-large div {
-      background-color: rgba(253, 208, 35, 0.9);
-      color: var(--lsu-purple-dark);
+      background: rgba(253,208,35,0.9) !important;
+      color: var(--lsu-dark) !important;
     }
-
-    /* Popup Styling */
-    .leaflet-popup-content-wrapper {
-      border-radius: 10px;
-    }
-
-    .station-popup {
-      min-width: 250px;
-    }
-
-    .station-popup h4 {
+    
+    /* Popup */
+    .popup-title {
+      font-weight: 700;
       color: var(--lsu-purple);
-      font-size: 1.1rem;
-      margin-bottom: 0.8rem;
-      font-family: Georgia, serif;
+      margin-bottom: 0.5rem;
     }
-
-    .station-popup .data-row {
+    .popup-row {
       display: flex;
       justify-content: space-between;
-      padding: 0.4rem 0;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 0.2rem 0;
+      font-size: 0.85rem;
     }
-
-    .station-popup .data-row:last-child {
-      border-bottom: none;
-    }
-
-    .station-popup .data-label {
-      font-weight: 600;
+    .popup-label {
       color: #666;
     }
-
-    .station-popup .data-value {
-      color: var(--lsu-purple);
+    .popup-val {
       font-weight: 700;
+      color: var(--lsu-purple);
     }
-
-    /* Scrollbar */
-    #info-panel::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    #info-panel::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-
-    #info-panel::-webkit-scrollbar-thumb {
-      background: var(--lsu-purple);
-      border-radius: 4px;
-    }
-
-    /* Responsive */
+    
     @media (max-width: 768px) {
-      #info-panel {
-        width: calc(100% - 20px);
-        max-height: 40vh;
+      .controls {
+        max-width: calc(100vw - 20px);
       }
-
-      .legend {
-        font-size: 0.8rem;
-        padding: 0.8rem;
+      #info-panel {
+        width: calc(100vw - 20px);
+        max-height: 40vh;
       }
     }
   </style>
 </head>
 <body>
-  
-  <!-- Loading Indicator -->
-  <div id="loading">
-    <div class="spinner"></div>
-    <div>Loading Louisiana Weather Stations...</div>
+
+  <!-- Date Picker Controls -->
+  <div class="controls">
+    <h3>📅 Select Date Range</h3>
+    
+    <div class="date-inputs">
+      <div class="date-group">
+        <label>Start Date</label>
+        <input type="date" id="start-date">
+      </div>
+      <div class="date-group">
+        <label>End Date</label>
+        <input type="date" id="end-date">
+      </div>
+    </div>
+    
+    <div class="quick-select">
+      <select id="quick-select">
+        <option value="">Quick Select...</option>
+        <option value="7">Last 7 Days</option>
+        <option value="14">Last 14 Days</option>
+        <option value="30">Last 30 Days</option>
+      </select>
+    </div>
+    
+    <button class="btn" id="fetch-btn">📊 Fetch Data</button>
+    
+    <div id="status"></div>
   </div>
 
-  <!-- Map Container -->
+  <!-- Map -->
   <div id="map"></div>
 
   <!-- Info Panel -->
   <div id="info-panel">
     <div class="panel-header">
-      <span>📊 Louisiana Stations</span>
-      <button class="toggle-btn" onclick="togglePanel()">−</button>
+      <span>📊 Stations</span>
+      <button class="toggle-btn" id="toggle-btn">−</button>
     </div>
     <div class="panel-content">
-      <input type="text" 
-             class="search-box" 
-             id="search-input" 
-             placeholder="Search stations..."
-             onkeyup="filterStations()">
-      
       <div class="stats">
         <div class="stat-box">
-          <div class="stat-number" id="total-stations">0</div>
-          <div class="stat-label">Total Stations</div>
+          <div class="stat-number" id="total-stations">—</div>
+          <div class="stat-label">Stations</div>
         </div>
         <div class="stat-box">
-          <div class="stat-number" id="visible-stations">0</div>
-          <div class="stat-label">Visible</div>
+          <div class="stat-number" id="date-range">—</div>
+          <div class="stat-label">Days</div>
         </div>
       </div>
-
-      <div id="selected-station" class="station-info" style="display: none;">
-        <h3>Selected Station</h3>
+      
+      <div id="station-card" class="station-info">
+        <h4 id="station-name"></h4>
         <div id="station-details"></div>
-      </div>
-
-      <div style="margin-top: 1rem; padding: 1rem; background: #e8f0fe; border-radius: 8px; font-size: 0.85rem;">
-        💡 <strong>Tip:</strong> Click any station marker for detailed information and recent observations.
       </div>
     </div>
   </div>
 
   <!-- Legend -->
   <div class="legend">
-    <div class="legend-title">Map Layers</div>
+    <div class="legend-title">Legend</div>
     <div class="legend-item">
-      <div class="legend-color" style="background: var(--lsu-purple);"></div>
-      <span>Weather Stations</span>
+      <div class="dot" style="background: var(--lsu-purple);"></div>
+      <span>Weather Station</span>
     </div>
     <div class="legend-item">
-      <div class="legend-color" style="background: transparent; border-color: #666; border-width: 2px;"></div>
-      <span>Parish Boundaries</span>
+      <div class="dot" style="background: transparent;"></div>
+      <span>Parish Boundary</span>
     </div>
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- MarkerCluster JS -->
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // Initialize map centered on Louisiana
+    // ═══════════════════════════════════════════════════════════════
+    //  INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════
+    
     const map = L.map('map').setView([30.95, -91.9], 7);
-
-    // Base layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '© OpenStreetMap contributors'
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO'
     }).addTo(map);
 
-    // Store station data
-    let allStations = [];
-    let stationMarkers = L.markerClusterGroup({
+    const clusters = L.markerClusterGroup({
       chunkedLoading: true,
-      spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
-      maxClusterRadius: 60
+      maxClusterRadius: 50
     });
+    map.addLayer(clusters);
 
-    // Load Louisiana boundary
+    // Set default dates (yesterday and 7 days ago)
+    const today = new Date();
+    today.setDate(today.getDate() - 1); // Yesterday
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 6);
+    
+    document.getElementById('end-date').valueAsDate = today;
+    document.getElementById('start-date').valueAsDate = weekAgo;
+
+    // Load boundaries
     fetch('./data/louisiana_state_boundary.geojson')
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
         L.geoJSON(data, {
-          style: {
-            color: '#461D7C',
-            weight: 3,
-            fillOpacity: 0,
-            dashArray: '10, 5'
-          }
+          style: { color: '#461D7C', weight: 3, fillOpacity: 0, dashArray: '10,5' }
         }).addTo(map);
       })
-      .catch(err => console.warn('State boundary not loaded:', err));
+      .catch(err => console.warn('State boundary not loaded'));
 
-    // Load parish boundaries
     fetch('./data/louisiana_parishes.geojson')
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
         L.geoJSON(data, {
-          style: {
-            color: '#666',
-            weight: 1.5,
-            fillOpacity: 0,
-            opacity: 0.6
-          },
-          onEachFeature: (feature, layer) => {
-            const name = feature.properties.PARISH || 
-                        feature.properties.NAME || 
-                        feature.properties.NAMELSAD || 
-                        'Parish';
+          style: { color: '#666', weight: 1.5, fillOpacity: 0, opacity: 0.6 },
+          onEachFeature: (f, layer) => {
+            const name = f.properties.PARISH || f.properties.NAME || 'Parish';
             layer.bindTooltip(name, { sticky: true });
           }
         }).addTo(map);
       })
-      .catch(err => console.warn('Parish boundaries not loaded:', err));
+      .catch(err => console.warn('Parishes not loaded'));
 
-    // Load station data from CSV
-    fetch('./data/weather_summary_with_coords.csv')
-      .then(res => res.text())
-      .then(csvText => {
-        allStations = parseCSV(csvText);
-        displayStations(allStations);
-        document.getElementById('total-stations').textContent = allStations.length;
-        document.getElementById('visible-stations').textContent = allStations.length;
-        document.getElementById('loading').classList.add('hidden');
-      })
-      .catch(err => {
-        console.error('Error loading station data:', err);
-        document.getElementById('loading').innerHTML = `
-          <div style="color: #d32f2f;">
-            ⚠️ Error loading station data<br/>
-            <small>${err.message}</small>
-          </div>
-        `;
-      });
-
-    // Parse CSV data
-    function parseCSV(csv) {
-      const lines = csv.trim().split('\n');
-      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-      const stations = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        if (values.length !== headers.length) continue;
-
-        const station = {};
-        headers.forEach((header, idx) => {
-          station[header] = values[idx];
-        });
-
-        // Only include stations with valid coordinates
-        if (station.Latitude && station.Longitude && 
-            !isNaN(parseFloat(station.Latitude)) && 
-            !isNaN(parseFloat(station.Longitude))) {
-          stations.push(station);
-        }
-      }
-
-      return stations;
-    }
-
-    // Parse CSV line (handles quoted fields)
-    function parseCSVLine(line) {
-      const result = [];
-      let current = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          result.push(current.trim().replace(/^"|"$/g, ''));
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim().replace(/^"|"$/g, ''));
-      return result;
-    }
-
-    // Display stations on map
-    function displayStations(stations) {
-      stationMarkers.clearLayers();
-
-      stations.forEach(station => {
-        const lat = parseFloat(station.Latitude);
-        const lon = parseFloat(station.Longitude);
-
-        if (isNaN(lat) || isNaN(lon)) return;
-
-        const marker = L.marker([lat, lon], {
-          icon: L.divIcon({
-            className: 'station-marker',
-            html: '<div style="background: #461D7C; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
-            iconSize: [16, 16]
-          })
-        });
-
-        // Create popup content
-        const popupContent = createPopupContent(station);
-        marker.bindPopup(popupContent);
-
-        // Click handler
-        marker.on('click', () => {
-          showStationDetails(station);
-        });
-
-        // Tooltip
-        marker.bindTooltip(station['Station Name'] || 'Station', {
-          permanent: false,
-          direction: 'top'
-        });
-
-        stationMarkers.addLayer(marker);
-      });
-
-      stationMarkers.addTo(map);
-    }
-
-    // Create popup content
-    function createPopupContent(station) {
-      const formatValue = (val) => {
-        if (val === undefined || val === null || val === '' || val === '-999') return '—';
-        const num = parseFloat(val);
-        if (isNaN(num)) return val;
-        return num.toFixed(1);
-      };
-
-      return `
-        <div class="station-popup">
-          <h4>${station['Station Name'] || 'Unknown Station'}</h4>
-          
-          <div class="data-row">
-            <span class="data-label">Climate Division:</span>
-            <span class="data-value">${station['Climate Division'] || '—'}</span>
-          </div>
-
-          <div class="data-row">
-            <span class="data-label">Avg T-Max:</span>
-            <span class="data-value">${formatValue(station['Avg T-Max'])}°F</span>
-          </div>
-
-          <div class="data-row">
-            <span class="data-label">Avg T-Min:</span>
-            <span class="data-value">${formatValue(station['Avg T-Min'])}°F</span>
-          </div>
-
-          <div class="data-row">
-            <span class="data-label">Total Precip:</span>
-            <span class="data-value">${formatValue(station['Total P'])}"</span>
-          </div>
-
-          <div class="data-row">
-            <span class="data-label">Location:</span>
-            <span class="data-value">${parseFloat(station.Latitude).toFixed(3)}, ${parseFloat(station.Longitude).toFixed(3)}</span>
-          </div>
-        </div>
-      `;
-    }
-
-    // Show station details in panel
-    function showStationDetails(station) {
-      const detailsDiv = document.getElementById('station-details');
-      const formatValue = (val) => {
-        if (val === undefined || val === null || val === '' || val === '-999') return '—';
-        const num = parseFloat(val);
-        if (isNaN(num)) return val;
-        return num.toFixed(1);
-      };
-
-      detailsDiv.innerHTML = `
-        <p><strong>Name:</strong> ${station['Station Name']}</p>
-        <p><strong>Division:</strong> ${station['Climate Division']}</p>
-        <p><strong>Avg High:</strong> ${formatValue(station['Avg T-Max'])}°F</p>
-        <p><strong>Avg Low:</strong> ${formatValue(station['Avg T-Min'])}°F</p>
-        <p><strong>Precipitation:</strong> ${formatValue(station['Total P'])}"</p>
-        <p><strong>Coordinates:</strong> ${parseFloat(station.Latitude).toFixed(4)}, ${parseFloat(station.Longitude).toFixed(4)}</p>
-      `;
-
-      document.getElementById('selected-station').style.display = 'block';
-    }
-
-    // Filter stations by search
-    function filterStations() {
-      const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    // ═══════════════════════════════════════════════════════════════
+    //  EVENT HANDLERS
+    // ═══════════════════════════════════════════════════════════════
+    
+    document.getElementById('quick-select').addEventListener('change', function() {
+      if (!this.value) return;
+      const days = parseInt(this.value);
+      const end = new Date();
+      end.setDate(end.getDate() - 1);
+      const start = new Date(end);
+      start.setDate(end.getDate() - (days - 1));
       
-      if (!searchTerm) {
-        displayStations(allStations);
-        document.getElementById('visible-stations').textContent = allStations.length;
+      document.getElementById('end-date').valueAsDate = end;
+      document.getElementById('start-date').valueAsDate = start;
+    });
+
+    document.getElementById('fetch-btn').addEventListener('click', fetchData);
+    
+    document.getElementById('toggle-btn').addEventListener('click', function() {
+      const panel = document.getElementById('info-panel');
+      panel.classList.toggle('collapsed');
+      this.textContent = panel.classList.contains('collapsed') ? '+' : '−';
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    //  FETCH DATA
+    // ═══════════════════════════════════════════════════════════════
+    
+    async function fetchData() {
+      const startDate = document.getElementById('start-date').value.replace(/-/g, '');
+      const endDate = document.getElementById('end-date').value.replace(/-/g, '');
+      
+      if (!startDate || !endDate) {
+        showStatus('Please select both dates', 'error');
         return;
       }
 
-      const filtered = allStations.filter(station => {
-        const name = (station['Station Name'] || '').toLowerCase();
-        const div = (station['Climate Division'] || '').toLowerCase();
-        return name.includes(searchTerm) || div.includes(searchTerm);
-      });
+      showStatus('Loading station list...', 'loading');
+      document.getElementById('fetch-btn').disabled = true;
 
-      displayStations(filtered);
-      document.getElementById('visible-stations').textContent = filtered.length;
+      try {
+        // Load station list
+        const stationResp = await fetch('./data/AgStats_co-op_list_Jay_KBedits1.txt');
+        const stationText = await stationResp.text();
+        const stations = parseStationList(stationText);
+        
+        showStatus(`Fetching data from ACIS API...`, 'loading');
+        
+        // Fetch from ACIS
+        const acisData = await fetchFromACIS(stations, startDate, endDate);
+        
+        showStatus('Processing data...', 'loading');
+        
+        // Process and display
+        const processedData = processACISData(acisData, stations);
+        displayStations(processedData);
+        
+        // Update stats
+        const days = Math.ceil((new Date(endDate.slice(0,4), endDate.slice(4,6)-1, endDate.slice(6,8)) - 
+                                new Date(startDate.slice(0,4), startDate.slice(4,6)-1, startDate.slice(6,8))) 
+                                / (1000*60*60*24)) + 1;
+        
+        document.getElementById('total-stations').textContent = processedData.length;
+        document.getElementById('date-range').textContent = days;
+        
+        showStatus(`✅ Loaded ${processedData.length} stations`, 'success');
+        
+      } catch (error) {
+        showStatus(`❌ Error: ${error.message}`, 'error');
+        console.error(error);
+      } finally {
+        document.getElementById('fetch-btn').disabled = false;
+      }
     }
 
-    // Toggle panel
-    function togglePanel() {
-      const panel = document.getElementById('info-panel');
-      const btn = document.querySelector('.toggle-btn');
+    // ═══════════════════════════════════════════════════════════════
+    //  PARSE STATION LIST
+    // ═══════════════════════════════════════════════════════════════
+    
+    function parseStationList(text) {
+      const stations = {};
+      text.split('\n').forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        
+        const parts = line.split(/\s+/);
+        if (parts.length < 2) return;
+        
+        const rawId = parts[0];
+        const name = parts.slice(1).join(' ');
+        const stationId = rawId.slice(0, -2);
+        const division = 'LA' + rawId.slice(-2);
+        
+        stations[stationId] = { name, division };
+      });
+      return stations;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  FETCH FROM ACIS API
+    // ═══════════════════════════════════════════════════════════════
+    
+    async function fetchFromACIS(stations, startDate, endDate) {
+      const stationIds = Object.keys(stations).join(',');
       
-      if (panel.classList.contains('collapsed')) {
-        panel.classList.remove('collapsed');
-        btn.textContent = '−';
-      } else {
-        panel.classList.add('collapsed');
-        btn.textContent = '+';
+      const payload = {
+        sids: stationIds,
+        sdate: startDate,
+        edate: endDate,
+        meta: ['name', 'climdiv', 'sids', 'll'],
+        elems: [
+          { name: 'maxt', interval: 'dly', smry: 'mean', smry_only: 1 },
+          { name: 'mint', interval: 'dly', smry: 'mean', smry_only: 1 },
+          { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1 },
+          { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1, normal: 'departure' },
+          { name: 'maxt', interval: 'dly', smry: 'max', smry_only: 1 },
+          { name: 'mint', interval: 'dly', smry: 'min', smry_only: 1 },
+          { name: 'hdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+          { name: 'cdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+          { name: 'pcpn', interval: 'dly', smry: 'sum', smry_only: 1 },
+          { name: 'pcpn', interval: 'dly', smry: 'max', smry_only: 1 },
+          { name: 'pcpn', interval: 'dly', smry: 'cnt_ge_0.01', duration: 'dly', smry_only: 1 }
+        ]
+      };
+
+      const response = await fetch('https://data.rcc-acis.org/MultiStnData', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`ACIS API returned ${response.status}`);
       }
+
+      return await response.json();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  PROCESS DATA
+    // ═══════════════════════════════════════════════════════════════
+    
+    function processACISData(apiData, stations) {
+      const data = [];
+      const stationData = apiData.data || [];
+
+      stationData.forEach(station => {
+        const meta = station.meta || {};
+        const sids = meta.sids || [];
+        const lookupId = sids[0] ? sids[0].trim() : null;
+        const ll = meta.ll || [null, null];
+        
+        const stationInfo = lookupId && stations[lookupId] ? stations[lookupId] : {};
+        const name = meta.name || stationInfo.name || 'Unknown';
+        const division = stationInfo.division || meta.climdiv || 'Unknown';
+        
+        const smry = station.smry || [];
+        
+        // Only add if has valid coordinates
+        if (ll[1] && ll[0] && !isNaN(parseFloat(ll[1])) && !isNaN(parseFloat(ll[0]))) {
+          data.push({
+            name,
+            division,
+            lat: parseFloat(ll[1]),
+            lon: parseFloat(ll[0]),
+            tmax: formatVal(smry[0]),
+            tmin: formatVal(smry[1]),
+            tavg: formatVal(smry[2]),
+            tavgDfn: formatVal(smry[3]),
+            maxT: formatVal(smry[4]),
+            minT: formatVal(smry[5]),
+            hdd: formatVal(smry[6]),
+            cdd: formatVal(smry[7]),
+            precip: formatVal(smry[8]),
+            precipMax: formatVal(smry[9]),
+            precipDays: formatVal(smry[10])
+          });
+        }
+      });
+
+      return data;
+    }
+
+    function formatVal(val) {
+      if (val === undefined || val === null || val === 'M' || val === '') return '—';
+      if (val === 'T') return '0.0';
+      const num = parseFloat(val);
+      return isNaN(num) ? '—' : num.toFixed(1);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  DISPLAY STATIONS
+    // ═══════════════════════════════════════════════════════════════
+    
+    function displayStations(data) {
+      clusters.clearLayers();
+
+      data.forEach(station => {
+        const marker = L.circleMarker([station.lat, station.lon], {
+          radius: 7,
+          fillColor: '#461D7C',
+          color: 'white',
+          weight: 2,
+          fillOpacity: 0.85
+        });
+
+        marker.bindPopup(`
+          <div class="popup-title">${station.name}</div>
+          <div class="popup-row">
+            <span class="popup-label">Division:</span>
+            <span class="popup-val">${station.division}</span>
+          </div>
+          <div class="popup-row">
+            <span class="popup-label">Avg High:</span>
+            <span class="popup-val">${station.tmax}°F</span>
+          </div>
+          <div class="popup-row">
+            <span class="popup-label">Avg Low:</span>
+            <span class="popup-val">${station.tmin}°F</span>
+          </div>
+          <div class="popup-row">
+            <span class="popup-label">Precipitation:</span>
+            <span class="popup-val">${station.precip}"</span>
+          </div>
+        `);
+
+        marker.bindTooltip(station.name, { direction: 'top', offset: [0, -6] });
+
+        marker.on('click', () => {
+          document.getElementById('station-name').textContent = station.name;
+          document.getElementById('station-details').innerHTML = `
+            <p><strong>Division:</strong> ${station.division}</p>
+            <p><strong>Avg High:</strong> ${station.tmax}°F</p>
+            <p><strong>Avg Low:</strong> ${station.tmin}°F</p>
+            <p><strong>Avg Temp:</strong> ${station.tavg}°F</p>
+            <p><strong>Total Precip:</strong> ${station.precip}"</p>
+            <p><strong>Max Precip:</strong> ${station.precipMax}"</p>
+            <p><strong>Rain Days:</strong> ${station.precipDays}</p>
+            <p><strong>HDD:</strong> ${station.hdd}</p>
+            <p><strong>CDD:</strong> ${station.cdd}</p>
+          `;
+          document.getElementById('station-card').style.display = 'block';
+        });
+
+        clusters.addLayer(marker);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  UTILITIES
+    // ═══════════════════════════════════════════════════════════════
+    
+    function showStatus(msg, type) {
+      const status = document.getElementById('status');
+      status.textContent = msg;
+      status.className = type;
     }
   </script>
 
