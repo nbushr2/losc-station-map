@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Louisiana Weather Station Tables | LOSC</title>
+  
+  <!-- DataTables for sorting/filtering -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  
+  <style>
+    :root {
+      --lsu-purple: #461D7C;
+      --lsu-gold: #FDD023;
+      --lsu-dark: #2C0F4F;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: var(--lsu-purple);
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+    
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8f9fa, #e8f0fe);
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 2px solid var(--lsu-gold);
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .control-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--lsu-purple);
+      margin-bottom: 6px;
+    }
+    
+    .control-group input {
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      min-width: 150px;
+    }
+    
+    .control-group input:focus {
+      outline: none;
+      border-color: var(--lsu-purple);
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(70,29,124,0.4);
+    }
+    
+    .btn-secondary {
+      background: var(--lsu-gold);
+      color: var(--lsu-dark);
+    }
+    
+    .btn-secondary:hover {
+      background: #ffd700;
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    /* Status Messages */
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      display: none;
+      font-weight: 600;
+    }
+    
+    .status.loading {
+      background: #e3f2fd;
+      color: #1976d2;
+      border-left: 4px solid #1976d2;
+      display: block;
+    }
+    
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border-left: 4px solid #2e7d32;
+      display: block;
+    }
+    
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+      border-left: 4px solid #c62828;
+      display: block;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e0e0e0;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Tables Section */
+    .section {
+      margin: 30px 0;
+      padding: 25px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+    }
+    
+    .section-title {
+      color: var(--lsu-purple);
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .section-description {
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, var(--lsu-purple), var(--lsu-gold));
+      margin: 20px 0;
+    }
+    
+    /* DataTables Styling */
+    table.dataTable {
+      width: 100% !important;
+      font-size: 0.85rem;
+    }
+    
+    table.dataTable thead th {
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+      font-weight: 700;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    
+    table.dataTable tbody td {
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    table.dataTable tbody td:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: var(--lsu-purple);
+    }
+    
+    table.dataTable tbody tr:hover {
+      background: #f8f9fa;
+    }
+    
+    table.dataTable tbody tr.division-row {
+      background: linear-gradient(135deg, #f8f9fa, #e8f0fe);
+      font-weight: 700;
+      border-top: 2px solid var(--lsu-purple);
+      border-bottom: 2px solid var(--lsu-purple);
+    }
+    
+    table.dataTable tbody tr.division-row td {
+      color: var(--lsu-purple);
+    }
+    
+    table.dataTable tbody tr.state-row {
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white !important;
+      font-weight: 700;
+    }
+    
+    table.dataTable tbody tr.state-row td {
+      color: white !important;
+    }
+    
+    /* Division Tables Container */
+    .division-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+    
+    .division-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      background: #fafafa;
+    }
+    
+    .division-card h3 {
+      color: var(--lsu-purple);
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      border-bottom: 3px solid var(--lsu-gold);
+      padding-bottom: 8px;
+    }
+    
+    .division-card table {
+      font-size: 0.8rem;
+    }
+    
+    /* Download Button */
+    .download-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff3cd;
+      border-radius: 8px;
+      border-left: 4px solid var(--lsu-gold);
+    }
+    
+    .download-section h3 {
+      color: var(--lsu-dark);
+      margin-bottom: 10px;
+    }
+    
+    .download-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .division-container {
+        grid-template-columns: 1fr;
+      }
+      
+      table.dataTable {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>📊 Louisiana Weather Station Tables</h1>
+    <p class="subtitle">Generate station data tables with divisional and statewide summaries matching the weekly newsletter format</p>
+    
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control-group">
+        <label>📅 Start Date</label>
+        <input type="date" id="start-date">
+      </div>
+      
+      <div class="control-group">
+        <label>📅 End Date</label>
+        <input type="date" id="end-date">
+      </div>
+      
+      <button class="btn btn-primary" id="fetch-btn">
+        📊 Generate Tables
+      </button>
+      
+      <button class="btn btn-secondary" id="export-csv-btn" disabled>
+        💾 Export to CSV
+      </button>
+      
+      <button class="btn btn-secondary" id="export-excel-btn" disabled>
+        📑 Export to Excel
+      </button>
+    </div>
+    
+    <!-- Status -->
+    <div id="status" class="status"></div>
+    
+    <!-- Divisional & Statewide Summary -->
+    <div class="section">
+      <div class="section-title">
+        <span>🌡️ Divisional and Statewide Summary</span>
+      </div>
+      <p class="section-description">
+        Summary statistics for each climate division (LA01-LA09) and statewide averages. 
+        Division metrics are computed from all stations within that division.
+      </p>
+      <div class="divider"></div>
+      <div id="summary-table-container"></div>
+    </div>
+    
+    <!-- Station Tables by Division -->
+    <div class="section">
+      <div class="section-title">
+        <span>📍 Station Summaries by Division</span>
+      </div>
+      <p class="section-description">
+        Individual station data organized by climate division. Each division table includes a summary row at the bottom.
+      </p>
+      <div class="divider"></div>
+      <div id="division-tables-container"></div>
+    </div>
+    
+    <!-- Download Options -->
+    <div class="download-section" style="display: none;" id="download-section">
+      <h3>💾 Download Options</h3>
+      <p>Export your data in multiple formats:</p>
+      <div class="download-buttons">
+        <button class="btn btn-secondary" onclick="downloadStationCSV()">📄 Stations CSV</button>
+        <button class="btn btn-secondary" onclick="downloadDivisionCSV()">📊 Divisions CSV</button>
+        <button class="btn btn-secondary" onclick="downloadCombinedCSV()">📦 Combined CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery & DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    //  CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════
+    
+    const STATION_LIST_PATH = './data/AgStats_co-op_list_Jay_KBedits1.txt';
+    const ACIS_URL = 'https://data.rcc-acis.org/MultiStnData';
+    
+    const DIVISION_NAMES = {
+      'LA01': 'Northwest',
+      'LA02': 'North Central',
+      'LA03': 'Northeast',
+      'LA04': 'West Central',
+      'LA05': 'Central',
+      'LA06': 'East Central',
+      'LA07': 'Southwest',
+      'LA08': 'South Central',
+      'LA09': 'Southeast'
+    };
+    
+    // Data storage
+    let stationData = [];
+    let divisionSummaries = [];
+    let stateSummary = null;
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════
+    
+    // Set default dates (last week)
+    const today = new Date();
+    today.setDate(today.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 6);
+    
+    document.getElementById('end-date').valueAsDate = today;
+    document.getElementById('start-date').valueAsDate = weekAgo;
+    
+    // Event listeners
+    document.getElementById('fetch-btn').addEventListener('click', generateTables);
+    document.getElementById('export-csv-btn').addEventListener('click', downloadCombinedCSV);
+    document.getElementById('export-excel-btn').addEventListener('click', downloadExcel);
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  MAIN FUNCTION
+    // ═══════════════════════════════════════════════════════════════
+    
+    async function generateTables() {
+      const startDate = document.getElementById('start-date').value.replace(/-/g, '');
+      const endDate = document.getElementById('end-date').value.replace(/-/g, '');
+      
+      if (!startDate || !endDate) {
+        showStatus('⚠️ Please select both dates', 'error');
+        return;
+      }
+      
+      showStatus('<span class="spinner"></span>Loading station list...', 'loading');
+      document.getElementById('fetch-btn').disabled = true;
+      
+      try {
+        // Load station list
+        const stationListResp = await fetch(STATION_LIST_PATH);
+        const stationListText = await stationListResp.text();
+        const stationMap = parseStationList(stationListText);
+        
+        showStatus('<span class="spinner"></span>Fetching data from ACIS API...', 'loading');
+        
+        // Fetch from ACIS
+        const acisData = await fetchACISData(stationMap, startDate, endDate);
+        
+        showStatus('<span class="spinner"></span>Processing station data...', 'loading');
+        
+        // Process data
+        stationData = processStationData(acisData, stationMap);
+        
+        showStatus('<span class="spinner"></span>Calculating divisional summaries...', 'loading');
+        
+        // Calculate summaries
+        divisionSummaries = calculateDivisionSummaries(stationData);
+        stateSummary = calculateStateSummary(divisionSummaries);
+        
+        showStatus('<span class="spinner"></span>Rendering tables...', 'loading');
+        
+        // Render tables
+        renderSummaryTable();
+        renderDivisionTables();
+        
+        // Enable export buttons
+        document.getElementById('export-csv-btn').disabled = false;
+        document.getElementById('export-excel-btn').disabled = false;
+        document.getElementById('download-section').style.display = 'block';
+        
+        showStatus(`✅ Successfully loaded ${stationData.length} stations across ${divisionSummaries.length} divisions`, 'success');
+        
+      } catch (error) {
+        showStatus(`❌ Error: ${error.message}`, 'error');
+        console.error('Error:', error);
+      } finally {
+        document.getElementById('fetch-btn').disabled = false;
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  PARSE STATION LIST
+    // ═══════════════════════════════════════════════════════════════
+    
+    function parseStationList(text) {
+      const stationMap = {};
+      text.split('\n').forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        
+        const parts = line.split(/\s+/);
+        if (parts.length < 2) return;
+        
+        const rawId = parts[0];
+        const name = parts.slice(1).join(' ');
+        const stationId = rawId.slice(0, -2);
+        const division = 'LA' + rawId.slice(-2);
+        
+        stationMap[stationId] = { name, division };
+      });
+      return stationMap;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  FETCH FROM ACIS API
+    // ═══════════════════════════════════════════════════════════════
+    
+    async function fetchACISData(stationMap, startDate, endDate) {
+      const stationIds = Object.keys(stationMap).join(',');
+      
+      const payload = {
+        sids: stationIds,
+        sdate: startDate,
+        edate: endDate,
+        meta: ['name', 'climdiv', 'sids'],
+        elems: [
+          { name: 'maxt', interval: 'dly', smry: 'mean', smry_only: 1 },
+          { name: 'mint', interval: 'dly', smry: 'mean', smry_only: 1 },
+          { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1 },
+          { name: 'avgt', interval: 'dly', smry: 'mean', smry_only: 1, normal: 'departure' },
+          { name: 'maxt', interval: 'dly', smry: 'max', smry_only: 1 },
+          { name: 'mint', interval: 'dly', smry: 'min', smry_only: 1 },
+          { name: 'hdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+          { name: 'hdd', interval: 'dly', smry: 'sum', smry_only: 1, normal: 'departure' },
+          { name: 'cdd', interval: 'dly', smry: 'sum', smry_only: 1 },
+          { name: 'cdd', interval: 'dly', smry: 'sum', smry_only: 1, normal: 'departure' },
+          { name: 'pcpn', interval: 'dly', smry: 'sum', smry_only: 1 },
+          { name: 'pcpn', interval: 'dly', smry: 'sum', smry_only: 1, normal: '1' },
+          { name: 'pcpn', interval: 'dly', smry: 'max', smry_only: 1 },
+          { name: 'pcpn', interval: 'dly', smry: { reduce: 'max', add: 'date' }, smry_only: 1 },
+          { name: 'pcpn', interval: 'dly', smry: 'cnt_ge_0.01', duration: 'dly', smry_only: 1 }
+        ]
+      };
+      
+      const response = await fetch(ACIS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`ACIS API error: ${response.status}`);
+      }
+      
+      return await response.json();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  PROCESS STATION DATA
+    // ═══════════════════════════════════════════════════════════════
+    
+    function processStationData(apiData, stationMap) {
+      const data = [];
+      const stationList = apiData.data || [];
+      
+      stationList.forEach(station => {
+        const meta = station.meta || {};
+        const sids = meta.sids || [];
+        const stationId = sids[0] ? sids[0].trim() : null;
+        
+        const info = stationId && stationMap[stationId] ? stationMap[stationId] : {};
+        const name = meta.name || info.name || 'Unknown';
+        const division = info.division || meta.climdiv || 'Unknown';
+        
+        const smry = station.smry || [];
+        
+        // Process summary data
+        const fix = (v) => {
+          if (v === 'M' || v === undefined || v === null || v === '') return null;
+          if (v === 'T') return 0;
+          return parseFloat(v);
+        };
+        
+        // Extract values
+        const avgTMax = fix(smry[0]);
+        const avgTMin = fix(smry[1]);
+        const tAvg = fix(smry[2]);
+        const tAvgDfn = fix(smry[3]);
+        const highestTMax = fix(smry[4]);
+        const lowestTMin = fix(smry[5]);
+        const hdd = fix(smry[6]);
+        const hddDfn = fix(smry[7]);
+        const cdd = fix(smry[8]);
+        const cddDfn = fix(smry[9]);
+        const totalP = fix(smry[10]);
+        const normalP = fix(smry[11]);
+        const oneDayMax = fix(smry[12]);
+        const pMaxDate = smry[13] && Array.isArray(smry[13]) ? smry[13][1] : null;
+        const pDays = fix(smry[14]);
+        
+        // Calculate derived values
+        const hddNormal = (hdd !== null && hddDfn !== null) ? hdd - hddDfn : null;
+        const pctHDD = (hdd !== null && hddNormal !== null && hddNormal !== 0) 
+          ? (hdd / hddNormal * 100) : null;
+        
+        const cddNormal = (cdd !== null && cddDfn !== null) ? cdd - cddDfn : null;
+        const pctCDD = (cdd !== null && cddNormal !== null && cddNormal !== 0) 
+          ? (cdd / cddNormal * 100) : null;
+        
+        const pDfn = (totalP !== null && normalP !== null) ? totalP - normalP : null;
+        
+        data.push({
+          stationName: name,
+          division: division,
+          avgTMax, avgTMin, tAvg, tAvgDfn,
+          highestTMax, lowestTMin,
+          hdd, hddDfn, hddNormal, pctHDD,
+          cdd, cddDfn, cddNormal, pctCDD,
+          totalP, normalP, pDfn,
+          oneDayMax, pMaxDate, pDays
+        });
+      });
+      
+      return data;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  CALCULATE SUMMARIES
+    // ═══════════════════════════════════════════════════════════════
+    
+    function calculateDivisionSummaries(stationData) {
+      const divisions = {};
+      
+      // Group by division
+      stationData.forEach(station => {
+        if (!divisions[station.division]) {
+          divisions[station.division] = [];
+        }
+        divisions[station.division].push(station);
+      });
+      
+      // Calculate summary for each division
+      const summaries = [];
+      Object.keys(divisions).sort().forEach(divCode => {
+        const stations = divisions[divCode];
+        const divName = DIVISION_NAMES[divCode] || divCode;
+        
+        const avg = (field) => {
+          const values = stations.map(s => s[field]).filter(v => v !== null);
+          return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+        };
+        
+        const max = (field) => {
+          const values = stations.map(s => s[field]).filter(v => v !== null);
+          return values.length > 0 ? Math.max(...values) : null;
+        };
+        
+        const min = (field) => {
+          const values = stations.map(s => s[field]).filter(v => v !== null);
+          return values.length > 0 ? Math.min(...values) : null;
+        };
+        
+        const hddAvg = avg('hdd');
+        const hddNormAvg = avg('hddNormal');
+        const pctHDD = (hddAvg !== null && hddNormAvg !== null && hddNormAvg !== 0)
+          ? (hddAvg / hddNormAvg * 100) : null;
+        
+        const cddAvg = avg('cdd');
+        const cddNormAvg = avg('cddNormal');
+        const pctCDD = (cddAvg !== null && cddNormAvg !== null && cddNormAvg !== 0)
+          ? (cddAvg / cddNormAvg * 100) : null;
+        
+        summaries.push({
+          division: divCode,
+          divisionName: divName,
+          avgTMax: avg('avgTMax'),
+          avgTMin: avg('avgTMin'),
+          tAvg: avg('tAvg'),
+          tAvgDfn: avg('tAvgDfn'),
+          highestTMax: max('highestTMax'),
+          lowestTMin: min('lowestTMin'),
+          hdd: hddAvg,
+          hddDfn: avg('hddDfn'),
+          hddNormal: hddNormAvg,
+          pctHDD: pctHDD,
+          cdd: cddAvg,
+          cddDfn: avg('cddDfn'),
+          cddNormal: cddNormAvg,
+          pctCDD: pctCDD,
+          totalP: avg('totalP'),
+          normalP: avg('normalP'),
+          pDfn: avg('pDfn'),
+          oneDayMax: max('oneDayMax'),
+          pDays: max('pDays')
+        });
+      });
+      
+      return summaries;
+    }
+    
+    function calculateStateSummary(divisionSummaries) {
+      const avg = (field) => {
+        const values = divisionSummaries.map(d => d[field]).filter(v => v !== null);
+        return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+      };
+      
+      const max = (field) => {
+        const values = divisionSummaries.map(d => d[field]).filter(v => v !== null);
+        return values.length > 0 ? Math.max(...values) : null;
+      };
+      
+      const min = (field) => {
+        const values = divisionSummaries.map(d => d[field]).filter(v => v !== null);
+        return values.length > 0 ? Math.min(...values) : null;
+      };
+      
+      const hddAvg = avg('hdd');
+      const hddNormAvg = avg('hddNormal');
+      const pctHDD = (hddAvg !== null && hddNormAvg !== null && hddNormAvg !== 0)
+        ? (hddAvg / hddNormAvg * 100) : null;
+      
+      const cddAvg = avg('cdd');
+      const cddNormAvg = avg('cddNormal');
+      const pctCDD = (cddAvg !== null && cddNormAvg !== null && cddNormAvg !== 0)
+        ? (cddAvg / cddNormAvg * 100) : null;
+      
+      return {
+        divisionName: 'STATE',
+        avgTMax: avg('avgTMax'),
+        avgTMin: avg('avgTMin'),
+        tAvg: avg('tAvg'),
+        tAvgDfn: avg('tAvgDfn'),
+        highestTMax: max('highestTMax'),
+        lowestTMin: min('lowestTMin'),
+        hdd: hddAvg,
+        hddDfn: avg('hddDfn'),
+        hddNormal: hddNormAvg,
+        pctHDD: pctHDD,
+        cdd: cddAvg,
+        cddDfn: avg('cddDfn'),
+        cddNormal: cddNormAvg,
+        pctCDD: pctCDD,
+        totalP: avg('totalP'),
+        normalP: avg('normalP'),
+        pDfn: avg('pDfn'),
+        oneDayMax: max('oneDayMax'),
+        pDays: max('pDays')
+      };
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  RENDER TABLES
+    // ═══════════════════════════════════════════════════════════════
+    
+    function renderSummaryTable() {
+      const container = document.getElementById('summary-table-container');
+      
+      const fmt = (val, decimals = 1) => {
+        if (val === null || val === undefined) return '—';
+        return Number(val).toFixed(decimals);
+      };
+      
+      let html = `
+        <table id="summary-table" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Division</th>
+              <th>Avg T-Max</th>
+              <th>Avg T-Min</th>
+              <th>T-Avg</th>
+              <th>T-Avg DFN</th>
+              <th>Highest T-Max</th>
+              <th>Lowest T-Min</th>
+              <th>HDD</th>
+              <th>HDD %</th>
+              <th>CDD</th>
+              <th>CDD %</th>
+              <th>Total P</th>
+              <th>Normal P</th>
+              <th>P-DFN</th>
+              <th>1-Day Max</th>
+              <th>P-Days</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      divisionSummaries.forEach(div => {
+        html += `
+          <tr>
+            <td>${div.divisionName}</td>
+            <td>${fmt(div.avgTMax)}</td>
+            <td>${fmt(div.avgTMin)}</td>
+            <td>${fmt(div.tAvg)}</td>
+            <td>${fmt(div.tAvgDfn, 1)}</td>
+            <td>${fmt(div.highestTMax, 0)}</td>
+            <td>${fmt(div.lowestTMin, 0)}</td>
+            <td>${fmt(div.hdd, 0)}</td>
+            <td>${fmt(div.pctHDD, 0)}</td>
+            <td>${fmt(div.cdd, 0)}</td>
+            <td>${fmt(div.pctCDD, 0)}</td>
+            <td>${fmt(div.totalP, 2)}</td>
+            <td>${fmt(div.normalP, 2)}</td>
+            <td>${fmt(div.pDfn, 2)}</td>
+            <td>${fmt(div.oneDayMax, 2)}</td>
+            <td>${fmt(div.pDays, 0)}</td>
+          </tr>
+        `;
+      });
+      
+      // State row
+      html += `
+        <tr class="state-row">
+          <td>${stateSummary.divisionName}</td>
+          <td>${fmt(stateSummary.avgTMax)}</td>
+          <td>${fmt(stateSummary.avgTMin)}</td>
+          <td>${fmt(stateSummary.tAvg)}</td>
+          <td>${fmt(stateSummary.tAvgDfn, 1)}</td>
+          <td>${fmt(stateSummary.highestTMax, 0)}</td>
+          <td>${fmt(stateSummary.lowestTMin, 0)}</td>
+          <td>${fmt(stateSummary.hdd, 0)}</td>
+          <td>${fmt(stateSummary.pctHDD, 0)}</td>
+          <td>${fmt(stateSummary.cdd, 0)}</td>
+          <td>${fmt(stateSummary.pctCDD, 0)}</td>
+          <td>${fmt(stateSummary.totalP, 2)}</td>
+          <td>${fmt(stateSummary.normalP, 2)}</td>
+          <td>${fmt(stateSummary.pDfn, 2)}</td>
+          <td>${fmt(stateSummary.oneDayMax, 2)}</td>
+          <td>${fmt(stateSummary.pDays, 0)}</td>
+        </tr>
+      `;
+      
+      html += `
+          </tbody>
+        </table>
+      `;
+      
+      container.innerHTML = html;
+      
+      // Initialize DataTable
+      $('#summary-table').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        order: []
+      });
+    }
+    
+    function renderDivisionTables() {
+      const container = document.getElementById('division-tables-container');
+      
+      const fmt = (val, decimals = 1) => {
+        if (val === null || val === undefined) return '—';
+        return Number(val).toFixed(decimals);
+      };
+      
+      // Group stations by division
+      const divisionGroups = {};
+      stationData.forEach(station => {
+        if (!divisionGroups[station.division]) {
+          divisionGroups[station.division] = [];
+        }
+        divisionGroups[station.division].push(station);
+      });
+      
+      let html = '<div class="division-container">';
+      
+      Object.keys(divisionGroups).sort().forEach((divCode, index) => {
+        const stations = divisionGroups[divCode];
+        const divSummary = divisionSummaries.find(d => d.division === divCode);
+        const divName = DIVISION_NAMES[divCode] || divCode;
+        
+        html += `
+          <div class="division-card">
+            <h3>${divName} (${divCode})</h3>
+            <table class="display division-table-${index}" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Station</th>
+                  <th>Avg T-Max</th>
+                  <th>Avg T-Min</th>
+                  <th>T-Avg</th>
+                  <th>HDD</th>
+                  <th>CDD</th>
+                  <th>Total P</th>
+                  <th>P-DFN</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        stations.forEach(station => {
+          html += `
+            <tr>
+              <td>${station.stationName}</td>
+              <td>${fmt(station.avgTMax)}</td>
+              <td>${fmt(station.avgTMin)}</td>
+              <td>${fmt(station.tAvg)}</td>
+              <td>${fmt(station.hdd, 0)}</td>
+              <td>${fmt(station.cdd, 0)}</td>
+              <td>${fmt(station.totalP, 2)}</td>
+              <td>${fmt(station.pDfn, 2)}</td>
+            </tr>
+          `;
+        });
+        
+        // Division summary row
+        html += `
+          <tr class="division-row">
+            <td><strong>DIVISION</strong></td>
+            <td>${fmt(divSummary.avgTMax)}</td>
+            <td>${fmt(divSummary.avgTMin)}</td>
+            <td>${fmt(divSummary.tAvg)}</td>
+            <td>${fmt(divSummary.hdd, 0)}</td>
+            <td>${fmt(divSummary.cdd, 0)}</td>
+            <td>${fmt(divSummary.totalP, 2)}</td>
+            <td>${fmt(divSummary.pDfn, 2)}</td>
+          </tr>
+        `;
+        
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      
+      container.innerHTML = html;
+      
+      // Initialize DataTables for each division
+      Object.keys(divisionGroups).forEach((divCode, index) => {
+        $(`.division-table-${index}`).DataTable({
+          paging: false,
+          searching: false,
+          info: false,
+          order: []
+        });
+      });
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  EXPORT FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════
+    
+    function downloadStationCSV() {
+      const csv = convertToCSV(stationData, 'stations');
+      downloadFile(csv, 'station_data.csv', 'text/csv');
+    }
+    
+    function downloadDivisionCSV() {
+      const csv = convertToCSV(divisionSummaries, 'divisions');
+      downloadFile(csv, 'division_summaries.csv', 'text/csv');
+    }
+    
+    function downloadCombinedCSV() {
+      const stationCSV = convertToCSV(stationData, 'stations');
+      const divisionCSV = convertToCSV(divisionSummaries, 'divisions');
+      const combined = stationCSV + '\n\n' + divisionCSV;
+      downloadFile(combined, 'combined_weather_data.csv', 'text/csv');
+    }
+    
+    function downloadExcel() {
+      const wb = XLSX.utils.book_new();
+      
+      // Stations sheet
+      const stationWS = XLSX.utils.json_to_sheet(stationData);
+      XLSX.utils.book_append_sheet(wb, stationWS, 'Stations');
+      
+      // Divisions sheet
+      const divisionWS = XLSX.utils.json_to_sheet(divisionSummaries);
+      XLSX.utils.book_append_sheet(wb, divisionWS, 'Divisions');
+      
+      XLSX.writeFile(wb, 'louisiana_weather_data.xlsx');
+    }
+    
+    function convertToCSV(data, type) {
+      if (data.length === 0) return '';
+      
+      const headers = Object.keys(data[0]);
+      let csv = headers.join(',') + '\n';
+      
+      data.forEach(row => {
+        const values = headers.map(header => {
+          const val = row[header];
+          if (val === null || val === undefined) return '';
+          if (typeof val === 'string') return `"${val}"`;
+          return val;
+        });
+        csv += values.join(',') + '\n';
+      });
+      
+      return csv;
+    }
+    
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    //  UTILITIES
+    // ═══════════════════════════════════════════════════════════════
+    
+    function showStatus(msg, type) {
+      const status = document.getElementById('status');
+      status.innerHTML = msg;
+      status.className = `status ${type}`;
+    }
+  </script>
+
+</body>
+</html>
