@@ -392,8 +392,16 @@
     // Map setup
     const map = L.map('map').setView([30.95, -91.9], 7);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap © CARTO'
+    attribution: '© OpenStreetMap © CARTO'
     }).addTo(map);
+
+    // ✅ Ensure boundaries draw ABOVE basemap tiles
+    map.createPane('boundariesPane');
+    map.getPane('boundariesPane').style.zIndex = 450; // tiles ~200, overlays ~400
+
+    // ✅ Ensure stations draw above boundaries
+    map.createPane('stationsPane');
+    map.getPane('stationsPane').style.zIndex = 500;
 
     const layers = {
       state: null,
@@ -426,6 +434,7 @@
         const stateRes = await fetch('./data/louisiana_state_boundary.geojson');
         const stateData = await stateRes.json();
         layers.state = L.geoJSON(stateData, {
+          pane: 'boundariesPane',
           style: { color: '#461D7C', weight: 3, fillOpacity: 0, dashArray: '10,5' }
         });
         layers.state.addTo(map);
@@ -435,6 +444,7 @@
         const divRes = await fetch('./data/louisiana_climate_divisions.geojson');
         const divData = await divRes.json();
         layers.divisions = L.geoJSON(divData, {
+          pane: 'boundariesPane',
           style: f => ({
             fillColor: divColors[f.properties.CLIMDIV] || 'rgba(150,150,150,0.3)',
             fillOpacity: 1,
@@ -444,7 +454,7 @@
           }),
           onEachFeature: (f, layer) => {
             const name = f.properties.NAME || 'Unknown';
-            const div = f.properties.CLIMDIV || '';
+            const div = String(f.properties.CLIMDIV ?? '');
             layer.bindTooltip(`<b>${name}</b><br/>LA${div.slice(-2)}`, { sticky: true });
           }
         });
@@ -455,6 +465,7 @@
         const parRes = await fetch('./data/louisiana_parishes_new.geojson');
         const parData = await parRes.json();
         layers.parishes = L.geoJSON(parData, {
+          pane: 'boundariesPane',
           style: { fillColor: 'transparent', color: '#666', weight: 1.5, opacity: 0.6 },
           onEachFeature: (f, layer) => {
             layer.bindTooltip(f.properties.NAME || 'Parish', { sticky: true });
@@ -636,6 +647,7 @@
       layers.stations.clearLayers();
       data.forEach(s => {
         const m = L.circleMarker([s.lat, s.lon], {
+          pane: 'stationsPane',
           radius: 7, fillColor: '#461D7C', color: 'white', weight: 2, fillOpacity: 0.85
         });
         m.bindPopup(`
