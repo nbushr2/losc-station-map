@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Louisiana Weather Station Dashboard | LOSC</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  
+  <style>
+    :root {
+      --lsu-purple: #461D7C;
+      --lsu-gold: #FDD023;
+      --lsu-dark: #2C0F4F;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    
+    /* ── Header ────────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+      padding: 1rem 2rem;
+    }
+    .header h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
+    .header p { opacity: 0.9; font-size: 0.9rem; }
+    
+    /* ── Controls Bar ──────────────────────────────────────── */
+    .controls {
+      background: white;
+      border-bottom: 2px solid var(--lsu-gold);
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .control-group label { font-size: 0.85rem; font-weight: 600; color: #555; }
+    .control-group input,
+    .control-group select {
+      padding: 0.5rem 0.8rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .control-group input:focus,
+    .control-group select:focus {
+      outline: none;
+      border-color: var(--lsu-purple);
+    }
+    
+    .btn {
+      background: var(--lsu-purple);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 1.2rem;
+    }
+    .btn:hover { background: var(--lsu-dark); }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    
+    /* ── Main Layout ───────────────────────────────────────── */
+    .container {
+      display: grid;
+      grid-template-columns: 60% 40%;
+      height: calc(100vh - 140px);
+    }
+    
+    /* ── Map Panel ─────────────────────────────────────────── */
+    #map { height: 100%; width: 100%; }
+    
+    /* ── Data Panel ────────────────────────────────────────── */
+    .data-panel {
+      overflow-y: auto;
+      background: #f9f9f9;
+      border-left: 2px solid var(--lsu-gold);
+    }
+    
+    .panel-header {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, var(--lsu-purple), var(--lsu-dark));
+      color: white;
+      padding: 1rem 1.5rem;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-header h2 { font-size: 1.2rem; }
+    .export-btn {
+      background: var(--lsu-gold);
+      color: var(--lsu-dark);
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .export-btn:hover { background: #FFE66D; }
+    
+    .panel-content { padding: 1.5rem; }
+    
+    /* ── Tabs ──────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #ddd;
+    }
+    .tab {
+      padding: 0.7rem 1.2rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active {
+      color: var(--lsu-purple);
+      border-bottom-color: var(--lsu-gold);
+    }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    /* ── Tables ────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      font-size: 0.85rem;
+    }
+    th {
+      background: var(--lsu-purple);
+      color: white;
+      padding: 0.6rem 0.5rem;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      font-size: 0.75rem;
+    }
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.5rem;
+      text-align: right;
+    }
+    td:first-child { text-align: left; font-weight: 600; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    tr:hover { background: #f0f0f0; }
+    .division-row {
+      background: var(--lsu-gold) !important;
+      font-weight: 700;
+    }
+    
+    /* ── Loading/Status ────────────────────────────────────── */
+    #status {
+      padding: 1rem;
+      text-align: center;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--lsu-purple);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .container { grid-template-columns: 1fr; grid-template-rows: 50% 50%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>🌦️ Louisiana Weather Station Dashboard</h1>
+    <p>Louisiana Office of State Climatology | Interactive Data Explorer</p>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group">
+      <label>Start Date</label>
+      <input type="date" id="start-date" />
+    </div>
+    
+    <div class="control-group">
+      <label>End Date</label>
+      <input type="date" id="end-date" />
+    </div>
+    
+    <div class="control-group">
+      <label>Quick Select</label>
+      <select id="quick-select">
+        <option value="">Custom Range</option>
+        <option value="7">Last 7 Days</option>
+        <option value="14">Last 14 Days</option>
+        <option value="30">Last 30 Days</option>
+        <option value="90">Last 90 Days</option>
+      </select>
+    </div>
+    
+    <button class="btn" id="fetch-btn">📊 Fetch Data</button>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- Map Panel -->
+    <div id="map"></div>
+
+    <!-- Data Panel -->
+    <div class="data-panel">
+      <div class="panel-header">
+        <h2>Data Tables</h2>
+        <button class="export-btn" id="export-csv" style="display:none">⬇ Download CSV</button>
+      </div>
+      
+      <div class="panel-content">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab="stations">All Stations</button>
+          <button class="tab" data-tab="divisions">By Division</button>
+          <button class="tab" data-tab="summary">Summary</button>
+        </div>
+
+        <!-- Status -->
+        <div id="status">Select a date range and click "Fetch Data" to begin</div>
+
+        <!-- Tab Contents -->
+        <div id="stations-tab" class="tab-content active">
+          <div id="stations-table"></div>
+        </div>
+
+        <div id="divisions-tab" class="tab-content">
+          <div id="divisions-table"></div>
+        </div>
+
+        <div id="summary-tab" class="tab-content">
+          <div id="summary-info"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    //  INITIALIZATION
+    // ══════════════════════════════════════════════════════════════
+    
+    // Initialize map
+    const map = L.map('map').setView([30.95, -91.9], 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO'
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+    map.addLayer(markers);
+
+    // Set default dates (last 7 days)
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    
+    document.getElementById('end-date').valueAsDate = today;
+    document.getElementById('start-date').valueAsDate = sevenDaysAgo;
+
+    // ══════════════════════════════════════════════════════════════
+    //  EVENT HANDLERS
+    // ══════════════════════════════════════════════════════════════
+    
+    // Quick select
+    document.getElementById('quick-select').addEventListener('change', function() {
+      if (!this.value) return;
+      const days = parseInt(this.value);
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - days);
+      
+      document.getElementById('end-date').valueAsDate = end;
+      document.getElementById('start-date').valueAsDate = start;
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        this.classList.add('active');
+        document.getElementById(this.dataset.tab + '-tab').classList.add('active');
+      });
+    });
+
+    // Fetch button
+    document.getElementById('fetch-btn').addEventListener('click', fetchData);
+
+    // Export CSV
+    document.getElementById('export-csv').addEventListener('click', exportCSV);
+
+    // ══════════════════════════════════════════════════════════════
+    //  DATA FETCHING
+    // ══════════════════════════════════════════════════════════════
+    
+    let currentData = null;
+
+    async function fetchData() {
+      const startDate = document.getElementById('start-date').value.replace(/-/g, '');
+      const endDate = document.getElementById('end-date').value.replace(/-/g, '');
+      
+      if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+      }
+
+      setStatus('<span class="loading"></span>Fetching data from ACIS API...');
+      document.getElementById('fetch-btn').disabled = true;
+
+      try {
+        // For demo: load from pre-generated CSV
+        // In production: call actual ACIS API or server endpoint
+        const response = await fetch('./data/weather_summary_with_coords.csv');
+        const csv = await response.text();
+        
+        currentData = parseCSV(csv);
+        renderTables(currentData);
+        updateMap(currentData);
+        
+        setStatus(`✅ Loaded ${currentData.length} stations`);
+        document.getElementById('export-csv').style.display = 'block';
+        
+      } catch (error) {
+        setStatus(`❌ Error: ${error.message}`);
+      } finally {
+        document.getElementById('fetch-btn').disabled = false;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  CSV PARSER
+    // ══════════════════════════════════════════════════════════════
+    
+    function parseCSV(csv) {
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const data = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        if (values.length !== headers.length) continue;
+
+        const row = {};
+        headers.forEach((header, idx) => {
+          row[header] = values[idx];
+        });
+        data.push(row);
+      }
+
+      return data;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  TABLE RENDERING
+    // ══════════════════════════════════════════════════════════════
+    
+    function renderTables(data) {
+      // All Stations Table
+      const stationsHtml = createTable(data, [
+        'Station Name', 'Climate Division', 'Avg T-Max', 'Avg T-Min', 'T-Avg',
+        'Total P', 'HDD', 'CDD', 'P-Days'
+      ]);
+      document.getElementById('stations-table').innerHTML = stationsHtml;
+
+      // Division Summaries
+      const divisions = calculateDivisionSummaries(data);
+      const divisionsHtml = createTable(divisions, [
+        'Division', 'Avg T-Max', 'Avg T-Min', 'T-Avg', 'Total P', 'HDD', 'CDD'
+      ]);
+      document.getElementById('divisions-table').innerHTML = divisionsHtml;
+
+      // Summary Info
+      const summaryHtml = createSummaryInfo(data);
+      document.getElementById('summary-info').innerHTML = summaryHtml;
+    }
+
+    function createTable(data, columns) {
+      let html = '<table><thead><tr>';
+      columns.forEach(col => html += `<th>${col}</th>`);
+      html += '</tr></thead><tbody>';
+
+      data.forEach(row => {
+        html += '<tr>';
+        columns.forEach(col => {
+          const val = row[col] || '—';
+          html += `<td>${val}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function calculateDivisionSummaries(data) {
+      const divisions = {};
+      
+      data.forEach(row => {
+        const div = row['Climate Division'];
+        if (!divisions[div]) {
+          divisions[div] = { count: 0, sumTMax: 0, sumTMin: 0, sumTAvg: 0, sumP: 0, sumHDD: 0, sumCDD: 0 };
+        }
+        
+        divisions[div].count++;
+        divisions[div].sumTMax += parseFloat(row['Avg T-Max']) || 0;
+        divisions[div].sumTMin += parseFloat(row['Avg T-Min']) || 0;
+        divisions[div].sumTAvg += parseFloat(row['T-Avg']) || 0;
+        divisions[div].sumP += parseFloat(row['Total P']) || 0;
+        divisions[div].sumHDD += parseFloat(row['HDD']) || 0;
+        divisions[div].sumCDD += parseFloat(row['CDD']) || 0;
+      });
+
+      return Object.keys(divisions).map(div => ({
+        'Division': div,
+        'Avg T-Max': (divisions[div].sumTMax / divisions[div].count).toFixed(1),
+        'Avg T-Min': (divisions[div].sumTMin / divisions[div].count).toFixed(1),
+        'T-Avg': (divisions[div].sumTAvg / divisions[div].count).toFixed(1),
+        'Total P': (divisions[div].sumP / divisions[div].count).toFixed(2),
+        'HDD': Math.round(divisions[div].sumHDD / divisions[div].count),
+        'CDD': Math.round(divisions[div].sumCDD / divisions[div].count)
+      }));
+    }
+
+    function createSummaryInfo(data) {
+      const totalStations = data.length;
+      const avgTemp = (data.reduce((sum, r) => sum + (parseFloat(r['T-Avg']) || 0), 0) / totalStations).toFixed(1);
+      const totalPrecip = (data.reduce((sum, r) => sum + (parseFloat(r['Total P']) || 0), 0) / totalStations).toFixed(2);
+
+      return `
+        <div style="padding: 2rem; background: white; border-radius: 8px;">
+          <h3 style="color: #461D7C; margin-bottom: 1rem;">Dataset Overview</h3>
+          <p><strong>Total Stations:</strong> ${totalStations}</p>
+          <p><strong>Statewide Avg Temperature:</strong> ${avgTemp}°F</p>
+          <p><strong>Average Precipitation:</strong> ${totalPrecip}"</p>
+        </div>
+      `;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  MAP UPDATE
+    // ══════════════════════════════════════════════════════════════
+    
+    function updateMap(data) {
+      markers.clearLayers();
+
+      data.forEach(row => {
+        const lat = parseFloat(row['Latitude']);
+        const lon = parseFloat(row['Longitude']);
+        
+        if (isNaN(lat) || isNaN(lon)) return;
+
+        const marker = L.circleMarker([lat, lon], {
+          radius: 6,
+          fillColor: '#461D7C',
+          color: 'white',
+          weight: 2,
+          fillOpacity: 0.8
+        });
+
+        marker.bindPopup(`
+          <strong>${row['Station Name']}</strong><br/>
+          Division: ${row['Climate Division']}<br/>
+          Temp: ${row['T-Avg']}°F<br/>
+          Precip: ${row['Total P']}"
+        `);
+
+        markers.addLayer(marker);
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  EXPORT
+    // ══════════════════════════════════════════════════════════════
+    
+    function exportCSV() {
+      if (!currentData) return;
+
+      let csv = Object.keys(currentData[0]).join(',') + '\n';
+      currentData.forEach(row => {
+        csv += Object.values(row).join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `losc_weather_data_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  UTILITIES
+    // ══════════════════════════════════════════════════════════════
+    
+    function setStatus(msg) {
+      document.getElementById('status').innerHTML = msg;
+    }
+  </script>
+
+</body>
+</html>
